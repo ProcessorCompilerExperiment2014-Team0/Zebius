@@ -4,8 +4,14 @@ CPU実験
 ## 設計原則
 小さくシンプルに。11月中に完動させることを目標にする。
 
+## 設計方針
+* 16bit固定長命令
+* バイトマシン
+* リトルエンディアン
+
 ## レジスタ
 データ長は32bitの汎用レジスタ16個。ただしr0は特殊な値と見做すので実質15個。
+
 
 ## 命令フォーマット
 命令は16bit固定長。
@@ -25,22 +31,22 @@ CPU実験
 	- R and rs rt rd
 	- R or  rs rt rd
 	- R cmp rs rt rd
+	- M mono rs neg rd
+	- M mono rs not rd
 * 浮動小数演算
 	- R fadd rs rt rd
 	- R fmul rs rt rd
 	- R fneg rs rt rd
 	- R fcmp rs rt td
-* 単項演算
-	- M mono rs op rd
-		+ finv
-		+ fneg
-		+ fsqrt
-		+ neg
-		+ not
+	- M mono rs finv rd
+	- M mono rs fneg rd
+	- M mono rs fsqrt rd
 * メモリ命令
 	- M ld rs disp rd
 	- M st rs disp rd
-	- I li rs immd
+* IO命令
+	- M mono rs wr -
+	- M mono rs rd -
 * 分岐命令
 	- I beq rs addr
 	- I bgt rs addr
