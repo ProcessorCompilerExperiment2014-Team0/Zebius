@@ -13,7 +13,29 @@ CPU実験
 ```
            | 4  | 4  | 4  | 4  |
 	R-form | op | rs | rt | rd |
-	I-form | op | rs |disp| rd |
-	M-form | op |   immd  | rd |
+	M-form | op | rs |disp| rd |
+	I-form | op | r  |   immd  |
 	B-form | op |     addr     |
 ```
+
+## 命令セット
+* 整数演算
+	- R add rs rt rd
+	- R sub rs rt rd
+	- R shl rs rt rd
+	- R cmp rs rt rd
+* 浮動小数演算
+	- R fadd rs rt rd
+	- R fmul rs rt rd
+	- R fneg rs rt rd
+	- M fmono rs op rd
+		+ finv, fneg, fsqrt
+	- R fcmp rs rt td
+* メモリ命令
+	- M ld rs disp rd
+	- M st rs disp rd
+	- I li rs immd rd
+* 分岐命令
+	- I beq rs addr
+	- I bgt rs addr
+	- B jmp addr
