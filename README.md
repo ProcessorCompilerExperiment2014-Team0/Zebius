@@ -10,7 +10,9 @@ CPU実験
 * リトルエンディアン
 
 ## レジスタ
-データ長は32bitの汎用レジスタ16個。ただしr0は特殊な値と見做すので実質15個。
+データ長は32bitの汎用レジスタ16個。ただし一部命令においてr0は特殊な値と見做す。
+* add のrs,rtに指定するとmovに等価にできる
+* 両方指定するとnopになる
 
 
 ## 命令フォーマット
@@ -51,9 +53,11 @@ CPU実験
 	- U read  read()->rd
 	- U write write((rs))
 * 分岐命令
-	- I beq if(eq?(rs)) goto(addr)
-	- I bgt if(gt?(rs)) goto(addr)
+	- I beq if(eq?(rs)) goto((pc)+addr)
+	- I bgt if(gt?(rs)) goto((pc)+addr)
 	- B jmp goto(addr)
+
+cmp, fcmpの結果は0bitに(rs)==(rt), 1bitに(rs)>(rt)を入れる。notをかけたら論理的にもnotになる。
 
 ### OPCODE表
 #### Unary以外
