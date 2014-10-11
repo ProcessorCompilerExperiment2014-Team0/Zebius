@@ -12,4 +12,6 @@ typedef union {
   int i;
 } data_t;
 
+void show_registers(data_t *reg);
+
 #endif
