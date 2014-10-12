@@ -55,8 +55,7 @@ void fneg(data_t *reg, int s, int d) {
 }
 
 void fsqrt(data_t *reg, int s, int d) {
-  /* reg[d].f = sqrtf(reg[s].f); */
-  fprintf(stderr, "sqrt is not implemented\n");
+  reg[d].f = sqrtf(reg[s].f);
 }
 
 void read(data_t *reg, int d) {
