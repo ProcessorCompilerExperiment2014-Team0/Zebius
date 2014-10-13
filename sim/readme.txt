@@ -1,39 +1,22 @@
 zsim : Zebius simulator
 
-opcodeの割り当てなど細かい部分は適当です。
-詳細が決まったら随時変更します。
-
 現在のところ命令はメモリ上には置かれず、
 (コアから見て)外部の領域に置かれます
 
--opcode
-0 add
-1 shl
-2 and
-3 or
-4 cmp
-5 fadd
-6 fmul
-7 fcmp
-8 unary
-9 ld
-A st
-B beq
-C bgt
-D jmp
+-fsqrt
+コンパイル通らない問題がこれによって解決した
+https://twitter.com/qnighy/status/521228560120287232
 
--unary opcode
-0 neg
-1 not
-2 finv
-3 fneg
-4 fsqrt(未実装)
-5 wr(未実装)
-6 rd(未実装)
+-read
+標準入力から読み込む。以下のいずれかの形式
+--符号付き十進整数
+  [+-]?[0-9]*
+--十六進数
+  0[xX][0-9a-fA-F]*
+--浮動小数
+  その他
 
--未実装の命令
---fsqrt
----sqrtfが見つからないと言われるので誰か分かったら教えて下さい
-   "-lm"オプションは試した
---wt
---rd
+-write
+標準出力に出力する。形式は符号付き十進整数、十六進数、単精度浮動小数点数の全て。
+
+実行終了時に、全てのレジスタの内容をwriteと同形式で出力する。

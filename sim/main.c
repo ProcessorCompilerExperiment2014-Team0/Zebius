@@ -28,7 +28,6 @@ int input(FILE *inst_file, inst_t *inst, int noi) {
     if(res < 0) {
       return 1;
     }
-    printf("%d %04X\n", noi, x);
     inst[i] = 0xFFFF & x;
   }
   return 0;
@@ -58,14 +57,14 @@ int initialize(const char *inst_file_path, int *noi, inst_t **inst, data_t **mem
 void show_instructions(inst_t *inst, int noi) {
   int i;
   for(i=0; i<noi; i++) {
-    printf("%04X\n", inst[i]);
+    fprintf(stderr, "%04X\n", inst[i]);
   }
 }
 
 void show_registers(data_t *reg) {
   int i;
   for(i=0; i<NUM_OF_REGISTER; i++) {
-    printf("r%2d: %08X = %f\n", i, reg[i].i, reg[i].f);
+    fprintf(stderr, "r%2d: %11d = %08X = %f\n", i, reg[i].i, reg[i].i, reg[i].f);
   }
 }
 
