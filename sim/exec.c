@@ -1,204 +1,442 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include "main.h"
+#include "exec.h"
 
-void add(data_t *reg, int s, int t, int d) {
-  reg[d].i = reg[s].i + reg[t].i;
+/* sign extend v as (len) bits integer */
+int extend(int v, int len) {
+  if(v >> (len - 1) & 1) {
+    v |= ~((1 << len) - 1);
+  }
+  return v;
 }
 
-void shl(data_t *reg, int s, int t, int d) {
-  if(reg[t].i >= 0) {
-    reg[d].i = reg[s].i << reg[t].i;
+void mem_st_dw(char *mem, int addr, int *s) {
+  memcpy(mem+addr, s, 4);
+}
+
+void mem_ld_dw(char *mem, int addr, int *d) {
+  memcpy(d, mem+addr, 4);
+}
+
+void inc_pc(state_t *st) {
+  st->pc.i += 2;
+}
+
+void i_mov_i(state_t *st, int imm, int n) {
+  st->gpr[n].i = extend(imm, 8);
+  inc_pc(st);
+}
+
+void i_mov(state_t *st, int m, int n) {
+  st->gpr[n].i = st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_mov_l_disp(state_t *st, int disp, int n) {
+  int addr = disp*4 + (st->pc.i & 0xFFFFFFFC) + 4;
+  mem_ld_dw(st->mem, addr, &st->gpr[n].i);
+  inc_pc(st);
+}
+
+void i_mov_l_st(state_t *st, int m, int n) {
+  mem_st_dw(st->mem, st->gpr[n].i, &st->gpr[m].i);
+  inc_pc(st);
+}
+
+void i_mov_l_ld(state_t *st, int m, int n) {
+  mem_ld_dw(st->mem, st->gpr[m].i, &st->gpr[n].i);
+  inc_pc(st);
+}
+
+void i_add(state_t *st, int m, int n) {
+  st->gpr[n].i += st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_add_i(state_t *st, int imm, int n) {
+  st->gpr[n].i += extend(imm, 8);
+  inc_pc(st);
+}
+
+void i_cmp_eq(state_t *st, int m, int n) {
+  if(st->gpr[n].i == st->gpr[m].i) {
+    st->sr.i |= 1;
   } else {
-    reg[d].i = reg[s].i >> reg[t].i;
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_cmp_gt(state_t *st, int m, int n) {
+  if(st->gpr[n].i > st->gpr[m].i) {
+    st->sr.i |= 1;
+  } else {
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_sub(state_t *st, int m, int n) {
+  st->gpr[n].i -= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_and(state_t *st, int m, int n) {
+  st->gpr[n].i &= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_not(state_t *st, int m, int n) {
+  st->gpr[n].i = ~st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_or(state_t *st, int m, int n) {
+  st->gpr[n].i |= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_xor(state_t *st, int m, int n) {
+  st->gpr[n].i ^= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_shld(state_t *st, int m, int n) {
+  if(st->gpr[m].i >= 0) {
+    st->gpr[n].i <<= st->gpr[m].i;
+  } else {
+    st->gpr[n].i >>= -st->gpr[m].i;
+  }
+  inc_pc(st);
+}
+
+void i_fldi0(state_t *st, int n) {
+  st->fr[n].i = 0x00000000;
+  inc_pc(st);
+}
+
+void i_fldi1(state_t *st, int n) {
+  st->fr[n].i = 0x3F800000;
+  inc_pc(st);
+}
+
+void i_fmov(state_t *st, int m, int n) {
+  st->fr[n].i = st->fr[m].i;
+  inc_pc(st);
+}
+
+void i_fmov_s_ld(state_t *st, int m, int n) {
+  mem_ld_dw(st->mem, st->gpr[m].i, &st->fr[n].i);
+  inc_pc(st);
+}
+
+void i_fmov_s_st(state_t *st, int m, int n) {
+  mem_st_dw(st->mem, st->gpr[n].i, &st->fr[m].i);
+  inc_pc(st);
+}
+
+void i_fadd(state_t *st, int m, int n) {
+  st->fr[n].f += st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_fcmp_eq(state_t *st, int m, int n) {
+  if(st->fr[n].f == st->fr[m].f) {
+    st->sr.i |= 1;
+  } else {
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_fcmp_gt(state_t *st, int m, int n) {
+  if(st->fr[n].f > st->fr[m].f) {
+    st->sr.i |= 1;
+  } else {
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_fdiv(state_t *st, int m, int n) {
+  st->fr[n].f /= st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_fmul(state_t *st, int m, int n) {
+  st->fr[n].f *= st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_fneg(state_t *st, int n) {
+  st->fr[n].f = -st->fr[n].f;
+  inc_pc(st);
+}
+
+void i_fsqrt(state_t *st, int n) {
+  st->fr[n].f = sqrtf(st->fr[n].f);
+  inc_pc(st);
+}
+
+void i_fsub(state_t *st, int m, int n) {
+  st->fr[n].f -= st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_bf(state_t *st, int disp) {
+  if(!(st->sr.i & 1)) {
+    st->pc.i += extend(disp, 8)*2 + 4;
   }
 }
 
-void and(data_t *reg, int s, int t, int d) {
-  reg[d].i = reg[s].i & reg[t].i;
-}
-
-void or(data_t *reg, int s, int t, int d) {
-  reg[d].i = reg[s].i | reg[t].i;
-}
-
-void cmp(data_t *reg, int s, int t, int d) {
-  if(reg[s].i > reg[t].i) {
-    reg[d].i = 1;
-  } else if(reg[s].i < reg[t].i) {
-    reg[d].i = -1;
-  } else {
-    reg[d].i = 0;
+void i_bt(state_t *st, int disp) {
+  if(st->sr.i & 1) {
+    st->pc.i += extend(disp, 8)*2 + 4;
   }
 }
 
-/* void sub(data_t *reg, int s, int t, int d) { */
-/*   reg[d].i = reg[s].i - reg[t].i; */
-/* } */
-
-/* void mul(data_t *reg, int s, int t, int d) { */
-/*   reg[d].i = reg[s].i * reg[t].i; */
-/* } */
-
-void neg(data_t *reg, int s, int d) {
-  reg[d].i = -reg[s].i;
+void i_bra(state_t *st, int disp) {
+  st->pc.i += extend(disp, 12)*2 + 4;
 }
 
-void not(data_t *reg, int s, int d) {
-  reg[d].i = ~reg[s].i;
+void i_jmp(state_t *st, int n) {
+  st->pc.i = st->gpr[n].i;
 }
 
-void fadd(data_t *reg, int s, int t, int d) {
-  reg[d].f = reg[s].f + reg[t].f;
+void i_lds(state_t *st, int n) {
+  st->fpul.i = st->gpr[n].i;
+  inc_pc(st);
 }
 
-void fmul(data_t *reg, int s, int t, int d) {
-  reg[d].f = reg[s].f * reg[t].f;
+void i_sts(state_t *st, int n) {
+  st->gpr[n].i = st->fpul.i;
+  inc_pc(st);
 }
+
+void i_flds(state_t *st, int n) {
+  st->fpul.i = st->fr[n].i;
+  inc_pc(st);
+}
+
+void i_fsts(state_t *st, int n) {
+  st->fr[n].i = st->fpul.i;
+  inc_pc(st);
+}
+
+void i_ftrc(state_t *st, int m) {
+  st->fpul.i = (int)st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_float(state_t *st, int n) {
+  st->fr[n].f = (float)st->fpul.i;
+  inc_pc(st);
+}
+
+void inst_error(int inst) {
+  fprintf(stderr, "Unknown instruction: %08X\n", inst);
+}
+
+int exec_inst(state_t *st) {
+  int inst;
+  memcpy(&inst, st->mem + st->pc.i, 2);
+  fprintf(stderr, "exec: %04X\n", inst);
   
-void fcmp(data_t *reg, int s, int t, int d) {
-  if(reg[s].f > reg[t].f) {
-    reg[d].i = 1;
-  } else if(reg[s].f < reg[t].f) {
-    reg[d].i = -1;
-  } else {
-    reg[d].i = 0;
-  }
-}
-
-void fneg(data_t *reg, int s, int d) {
-  reg[d].f = -reg[s].f;
-}
-  
-void finv(data_t *reg, int s, int d) {
-  reg[d].f = 1.0 / reg[s].f;
-}
-
-void fsqrt(data_t *reg, int s, int d) {
-  /* reg[d].f = sqrtf(reg[s].f); */
-  printf("sqrt is not implemented\n");
-}
-
-int get_addr(int disp, int rv) {
-  if(disp >> 3 & 1) {
-    disp |= 0xFFFFFFF0;
-  }
-  return rv + disp;
-}
-
-void exec_inst(data_t *reg, data_t *mem, inst_t *insts, int *pc) {
-  int inst = insts[*pc];
-  printf("exec: %04X\n", inst);
   int opcode = inst >> 12;
-  if(opcode < 11) {
-    int operand[3];
-    int i;
-    for(i=0; i<3; i++) {
-      operand[i] = 0xF & (inst >> (8 - i * 4));
-    }
-    printf("operands = (%X, %X, %X)\n", operand[0], operand[1], operand[2]);
+  if(opcode == 0x7 || opcode == 0x8 || opcode == 0x9 || opcode == 0xE) { /* 4,4,8 form */
+    int param[2];
+    param[0] = 0xF & (inst >> 8);
+    param[1] = 0xFF & inst;
     switch(opcode) {
-    case 0:                     /* add */
-      add(reg, operand[0], operand[1], operand[2]);
+    case 0x7:                   /* ADD imm */
+      i_add_i(st, param[1], param[0]);
       break;
-    case 1:                     /* shl */
-      shl(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 2:                     /* and */
-      and(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 3:                     /* or */
-      or(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 4:                     /* cmp */
-      cmp(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 5:                     /* fadd */
-      fadd(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 6:                     /* fmul */
-      fmul(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 7:                     /* fcmp */
-      fcmp(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 8:                     /* unary */
-      switch(operand[1]) {
-      case 0:
-        neg(reg, operand[0], operand[2]);
+    case 0x8:
+      switch(param[0]) {
+      case 0x9:                 /* BT */
+        i_bt(st, param[1]);
         break;
-      case 1:
-        not(reg, operand[0], operand[2]);
-        break;
-      case 2:
-        finv(reg, operand[0], operand[2]);
-        break;
-      case 3:
-        fneg(reg, operand[0], operand[2]);
-        break;
-      case 4:
-        fsqrt(reg, operand[0], operand[2]);
-        break;
-      case 5:                   /* wr */
-        printf("write\n");
-        break;
-      case 6:                   /* rd */
-        printf("read\n");
+      case 0xB:                 /* BF */
+        i_bf(st, param[1]);
         break;
       default:
-        break;
+        inst_error(inst);
+        return -1;
       }
       break;
-    case 9:                     /* ld */
-      operand[1] = get_addr(operand[1], operand[2]);
-      printf("load from %05X\n", operand[1]);
-      reg[operand[0]] = mem[operand[1]];
+    case 0x9:                   /* MOV.L(PC relative) */
+      i_mov_l_disp(st, param[1], param[0]);
       break;
-    case 10:                    /* st */
-      operand[1] = get_addr(operand[1], operand[2]);
-      printf("store to %05X\n", operand[1]);
-      mem[operand[1]] = reg[operand[0]];
+    case 0xE:                   /* MOV(imm) */
+      i_mov_i(st, param[1], param[0]);
       break;
     default:
-      printf("unknown instruction: %04X\n", inst);
-      break;
+      inst_error(inst);
+      return -1;
     }
-    (*pc)++;
-  } else if(opcode < 13) {
-    int operand = 0xF & (inst >> 8);
-    int immd = 0xFF & inst;
+  } else if(opcode == 0xA) {    /* 4,12 form */
+    int param = 0xFFF & inst;
+    i_bra(st, param);           /* BRA */
+  } else {                      /* 4,4,4,4 form */
+    int param[3];
+    int i;
+    for(i=0; i<3; i++) {
+      param[i] = 0xF & (inst >> (8 - i * 4));
+    }
     switch(opcode) {
-    case 11:                    /* beq */
-      if(!reg[operand].i) {     /* taken */
-        *pc += immd;
-      } else {                  /* not taken */
-        (*pc)++;
+    case 0x0:                   /* STS */
+      if(param[1] == 0x5 && param[2] == 0xA) {
+        i_sts(st, param[0]);
+      } else {
+        inst_error(inst);
+        return -1;
       }
       break;
-    case 12:                    /* bgt */
-      if(reg[operand].i > 0) {  /* taken */
-        *pc += immd;
-      } else {                  /* not taken */
-        (*pc)++;
+    case 0x2:
+      switch(param[2]) {
+      case 0x2:                 /* MOV.L(st) */
+        i_mov_l_st(st, param[1], param[0]);
+        break;
+      case 0x9:                 /* AND */
+        i_and(st, param[1], param[0]);
+        break;
+      case 0xA:                 /* XOR */
+        i_xor(st, param[1], param[0]);
+        break;
+      case 0xB:                 /* OR */
+        i_or(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x3:
+      switch(param[2]) {
+      case 0x0:                 /* CMP/EQ */
+        i_cmp_eq(st, param[1], param[0]);
+        break;
+      case 0x7:                 /* CMP/GT */
+        i_cmp_gt(st, param[1], param[0]);
+        break;
+      case 0x8:                 /* SUB */
+        i_sub(st, param[1], param[0]);
+        break;
+      case 0xC:                 /* ADD */
+        i_add(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x4:
+      switch(param[2]) {
+      case 0xA:
+        if(param[1] == 0x5) {   /* LDS */
+          i_lds(st, param[0]);
+        } else {
+          inst_error(inst);
+          return -1;
+        }
+        break;
+      case 0xB:
+        if(param[1] == 0x2) {   /* JMP */
+          i_jmp(st, param[0]);
+        } else {
+          inst_error(inst);
+          return -1;
+        }
+        break;
+      case 0xD:                 /* SHLD */
+        i_shld(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x6:
+      switch(param[2]) {
+      case 0x2:                 /* MOV.L(ld) */
+        i_mov_l_ld(st, param[1], param[0]);
+        break;
+      case 0x3:                 /* MOV */
+        i_mov(st, param[1], param[0]);
+        break;
+      case 0x7:                 /* NOT */
+        i_not(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0xF:
+      switch(param[2]) {
+      case 0x0:                 /* FADD */
+        i_fadd(st, param[1], param[0]);
+        break;
+      case 0x1:                 /* FSUB */
+        i_fsub(st, param[1], param[0]);
+        break;
+      case 0x2:                 /* FMUL */
+        i_fmul(st, param[1], param[0]);
+        break;
+      case 0x3:                 /* FDIV */
+        i_fdiv(st, param[1], param[0]);
+        break;
+      case 0x4:                 /* FCMP/EQ */
+        i_fcmp_eq(st, param[1], param[0]);
+        break;
+      case 0x5:                 /* FCMP/GT */
+        i_fcmp_gt(st, param[1], param[0]);
+        break;
+      case 0x8:                 /* FMOV.S(ld) */
+        i_fmov_s_ld(st, param[1], param[0]);
+        break;
+      case 0xA:                 /* FMOV.S(st) */
+        i_fmov_s_st(st, param[1], param[0]);
+        break;
+      case 0xB:
+        switch(param[1]) {
+        case 0x4:               /* FNEG */
+          i_fneg(st, param[0]);
+          break;
+        case 0x6:               /* FSQRT */
+          i_fsqrt(st, param[0]);
+          break;
+        case 0x8:               /* FLDI0 */
+          i_fldi0(st, param[0]);
+          break;
+        case 0x9:               /* FLDI1 */
+          i_fldi1(st, param[0]);
+          break;
+        default:
+          inst_error(inst);
+          return -1;
+        }
+      default:
+        inst_error(inst);
+        return -1;
       }
       break;
     default:
-      printf("unknown instruction: %04X\n", inst);
-      break;
+      inst_error(inst);
+      return -1;
     }
-  } else if(opcode == 13) {     /* jmp */
-    int addr = 0xFFF & inst;
-    *pc = addr;
-  } else {
-    printf("unknown instruction: %04X\n", inst);
   }
+  return 0;
 }
 
-void run(data_t *reg, data_t *mem, inst_t *inst, int noi) {
-  int pc = 0;
-  while(pc < noi) {
-    exec_inst(reg, mem, inst, &pc);
+void run(state_t *st, int noi) {
+  st->pc.i = 0;
+  while(st->pc.i < noi * 2) {
+    show_status(st);
+    if(exec_inst(st) < 0) break;
   }
 }
