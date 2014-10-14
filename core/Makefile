@@ -17,4 +17,4 @@ $(TESTBENCH): $(OBJECTS)
 
 clean :
 	$(GHDLC) --clean
-	rm *.vcd work-obj93.fc
+	rm *.vcd work-obj93.cf
