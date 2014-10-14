@@ -16,55 +16,51 @@ int get_inst_len(const char *file) {
       return -1;
     }
   } while(errno == EINTR);
-  return st.st_size / INST_LEN;
+  return st.st_size / 2;
 }
 
-int input(FILE *inst_file, inst_t *inst, int noi) {
-  int x;
-  int i;
-  int res;
-  for(i=0; i<noi; i++) {
-    res = fread(&x, 2, 1, inst_file);
-    if(res < 0) {
-      return 1;
-    }
-    inst[i] = 0xFFFF & x;
-  }
-  return 0;
-}
-
-int initialize(const char *inst_file_path, int *noi, inst_t **inst, data_t **mem) {
+int initialize(const char *inst_file_path, int *noi, char **mem) {
   *noi = get_inst_len(inst_file_path);
   if(*noi < 0) {
     return 1;
   }
-  FILE *inst_file = fopen(inst_file_path, "r");
+  FILE *inst_file = fopen(inst_file_path, "rb");
   if(!inst_file) {
     perror("input file");
     return 1;
   }
-  *inst = malloc(sizeof(inst_t)*(*noi));
-  if(input(inst_file, *inst, *noi)) {
-    free(*inst);
-    return 1;
+  *mem = malloc(SIZE_OF_SRAM);
+
+  char *p = *mem;
+  int rest = *noi;
+  int len;
+  while(rest > 0) {
+    len = fread(p, 2, rest, inst_file);
+    p += len*2;
+    rest -= len;
   }
+  /* fprintf(stderr, "noi = %d\n", *noi); */
+  /* fprintf(stderr, "initialize.res = %d\n", res); */
+
   fclose(inst_file);
 
-  *mem = malloc(sizeof(data_t) * SIZE_OF_SRAM);
   return 0;
 }
 
-void show_instructions(inst_t *inst, int noi) {
+void show_instructions(char *mem, int noi) {
   int i;
   for(i=0; i<noi; i++) {
-    fprintf(stderr, "%04X\n", inst[i]);
+    fprintf(stderr, "%02X%02X\n", 0xFF & mem[2*i+1], 0xFF & mem[2*i]);
   }
 }
 
-void show_registers(data_t *reg) {
+void show_status(state_t *st) {
   int i;
-  for(i=0; i<NUM_OF_REGISTER; i++) {
-    fprintf(stderr, "r%2d: %11d = %08X = %f\n", i, reg[i].i, reg[i].i, reg[i].f);
+  for(i=0; i<NUM_OF_GPR; i++) {
+    fprintf(stderr, "R  %2d: %08X = %11d\n", i, st->gpr[i].i, st->gpr[i].i);
+  }
+  for(i=0; i<NUM_OF_FR; i++) {
+    fprintf(stderr, "FR %2d: %08X = %f\n", i, st->fr[i].i, st->fr[i].f);
   }
 }
 
@@ -73,23 +69,17 @@ int main(int argc, char **argv) {
     fprintf(stderr, "usage: zsim <filename>\n");
     return 1;
   }
-  data_t reg[NUM_OF_REGISTER];
-  reg[0].i = 0;
-  data_t *mem;
-  inst_t *inst;
+  state_t st;
   int noi;
-  if(initialize(argv[1], &noi, &inst, &mem)) {
+  if(initialize(argv[1], &noi, &st.mem)) {
     return 1;
   }
 
-  show_instructions(inst, noi);
+  show_instructions(st.mem, noi);
 
-  mem[0].i = 0x12345678;
-  run(reg, mem, inst, noi);
+  run(&st, noi);
 
-  show_registers(reg);
-
-  free(inst);
-  free(mem);
+  show_status(&st);
+  free(st.mem);
   return 0;
 }

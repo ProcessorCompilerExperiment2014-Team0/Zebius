@@ -1,116 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include "main.h"
-
-void add(data_t *reg, int s, int t, int d) {
-  reg[d].i = reg[s].i + reg[t].i;
-}
-
-void cmp(data_t *reg, int s, int t, int d) {
-  if(reg[s].i == reg[t].i) {
-    reg[d].i = 1;
-  } else if(reg[s].i > reg[t].i) {
-    reg[d].i = 2;
-  } else {
-    reg[d].i = 0;
-  }
-}
-
-void shl(data_t *reg, int s, int t, int d) {
-  if(reg[t].i >= 0) {
-    reg[d].i = reg[s].i << reg[t].i;
-  } else {
-    reg[d].i = reg[s].i >> -reg[t].i;
-  }
-}
-
-void and(data_t *reg, int s, int t, int d) {
-  reg[d].i = reg[s].i & reg[t].i;
-}
-
-void or(data_t *reg, int s, int t, int d) {
-  reg[d].i = reg[s].i | reg[t].i;
-}
-
-void xor(data_t *reg, int s, int t, int d) {
-  reg[d].i = reg[s].i ^ reg[t].i;
-}
-
-void neg(data_t *reg, int s, int d) {
-  reg[d].i = -reg[s].i;
-}
-
-void not(data_t *reg, int s, int d) {
-  reg[d].i = ~reg[s].i;
-}
-  
-void finv(data_t *reg, int s, int d) {
-  reg[d].f = 1.0 / reg[s].f;
-}
-
-void fneg(data_t *reg, int s, int d) {
-  reg[d].f = -reg[s].f;
-}
-
-void fsqrt(data_t *reg, int s, int d) {
-  reg[d].f = sqrtf(reg[s].f);
-}
-
-void read(data_t *reg, int d) {
-  char buf[64];
-  printf("read into r%d: ", d);
-  int res = scanf("%63s", buf);
-  if(res == EOF) {
-    perror("read");
-    return;
-  }
-  buf[63] = '\0';
-  if(buf[0] == '0' && (buf[1] == 'x' || buf[1] == 'X')) {
-    sscanf(buf+2, "%x", &reg[d].i);
-    return;
-  }
-  char *p = buf;
-  int is_int = 1;
-  if(buf[0] == '+' || buf[0] == '-') {
-    p++;
-  }
-  while(*p) {
-    if(*p < '0' || *p > '9') {
-      is_int = 0;
-      break;
-    }
-    p++;
-  }
-  if(is_int) {
-    sscanf(buf, "%d", &reg[d].i);
-  } else {
-    sscanf(buf, "%f", &reg[d].f);
-  }
-}
-
-void write(data_t *reg, int s) {
-  printf("write: %11d = %08X = %f\n", reg[s].i, reg[s].i, reg[s].f);
-}
-
-void fadd(data_t *reg, int s, int t, int d) {
-  reg[d].f = reg[s].f + reg[t].f;
-}
-
-void fmul(data_t *reg, int s, int t, int d) {
-  reg[d].f = reg[s].f * reg[t].f;
-}
-  
-void fcmp(data_t *reg, int s, int t, int d) {
-  if(reg[s].f == reg[t].f) {
-    reg[d].i = 1;
-  } else if(reg[s].f > reg[t].f) {
-    reg[d].i = 2;
-  } else {
-    reg[d].i = 0;
-  }
-}
+#include "exec.h"
 
 /* sign extend v as (len) bits integer */
 int extend(int v, int len) {
@@ -120,136 +14,429 @@ int extend(int v, int len) {
   return v;
 }
 
-/* int get_addr(int disp, int rv) { */
-/*   if(disp >> 3 & 1) { */
-/*     disp |= 0xFFFFFFF0; */
-/*   } */
-/*   return rv + disp; */
-/* } */
-
-void ld(data_t *reg, data_t *mem, int s, int disp, int r1) {
-  int addr = extend(reg[disp].i, 4) + reg[s].i;
-  fprintf(stderr, "load from %05X\n", addr);
-  reg[r1].i = mem[addr].i;
+void mem_st_dw(char *mem, int addr, int *s) {
+  memcpy(mem+addr, s, 4);
 }
 
-void st(data_t *reg, data_t *mem, int s, int disp, int r1) {
-  int addr = extend(reg[disp].i, 4) + reg[s].i;
-  fprintf(stderr, "store to %05X\n", addr);
-  mem[addr].i = reg[r1].i;
+void mem_ld_dw(char *mem, int addr, int *d) {
+  memcpy(d, mem+addr, 4);
 }
 
-void exec_inst(data_t *reg, data_t *mem, inst_t *insts, int *pc) {
-  int inst = insts[*pc];
-  /* fprintf(stderr, "exec: %04X\n", inst); */
-  int opcode = inst >> 12;
-  if(opcode < 0xC) {
-    int operand[3];
-    int i;
-    for(i=0; i<3; i++) {
-      operand[i] = 0xF & (inst >> (8 - i * 4));
-    }
-    /* fprintf(stderr, "operands = (%X, %X, %X)\n", operand[0], operand[1], operand[2]); */
-    switch(opcode) {
-    case 0x0:                   /* add */
-      add(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x1:                   /* cmp */
-      cmp(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x2:                   /* shl */
-      shl(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x3:                   /* and */
-      and(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x4:                   /* or */
-      or(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x5:                   /* xor */
-      xor(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x6:                   /* unary */
-      switch(operand[1]) {
-      case 0x0:                 /* neg */
-        neg(reg, operand[0], operand[2]);
-        break;
-      case 0x1:                 /* not */
-        not(reg, operand[0], operand[2]);
-        break;
-      case 0x2:                 /* finv */
-        finv(reg, operand[0], operand[2]);
-        break;
-      case 0x3:                 /* fneg */
-        fneg(reg, operand[0], operand[2]);
-        break;
-      case 0x4:                 /* fsqrt */
-        fsqrt(reg, operand[0], operand[2]);
-        break;
-      case 0x5:                 /* read */
-        read(reg, operand[2]);
-        break;
-      case 0x6:                 /* write */
-        write(reg, operand[0]);
-        break;
-      default:
-        fprintf(stderr, "unknown instruction: %04X\n", inst);
-        break;
-      }
-      break;
-    case 0x7:                   /* fadd */
-      fadd(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x8:                   /* fmul */
-      fmul(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0x9:                   /* fcmp */
-      fcmp(reg, operand[0], operand[1], operand[2]);
-      break;
-    case 0xA:                   /* ld */
-      ld(reg, mem, operand[0], operand[1], operand[2]);
-      break;
-    case 0xB:                   /* st */
-      st(reg, mem, operand[0], operand[1], operand[2]);
-      break;
-    default:
-      fprintf(stderr, "unknown instruction: %04X\n", inst);
-      break;
-    }
-    (*pc)++;
-  } else if(opcode < 0xE) {
-    int operand = 0xF & (inst >> 8);
-    int immd = 0xFF & inst;
-    switch(opcode) {
-    case 0xC:                   /* beq */
-      if(reg[operand].i & 1) {  /* taken */
-        *pc += extend(immd, 8);
-      } else {                  /* not taken */
-        (*pc)++;
-      }
-      break;
-    case 0xD:                   /* bgt */
-      if(reg[operand].i & 2) {  /* taken */
-        *pc += extend(immd, 8);
-      } else {                  /* not taken */
-        (*pc)++;
-      }
-      break;
-    default:
-      fprintf(stderr, "unknown instruction: %04X\n", inst);
-      break;
-    }
-  } else if(opcode == 0xE) {    /* jmp */
-    int addr = 0xFFF & inst;
-    *pc = addr;
+void inc_pc(state_t *st) {
+  st->pc.i += 2;
+}
+
+void i_mov_i(state_t *st, int imm, int n) {
+  st->gpr[n].i = extend(imm, 8);
+  inc_pc(st);
+}
+
+void i_mov(state_t *st, int m, int n) {
+  st->gpr[n].i = st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_mov_l_disp(state_t *st, int disp, int n) {
+  int addr = disp*4 + (st->pc.i & 0xFFFFFFFC) + 4;
+  mem_ld_dw(st->mem, addr, &st->gpr[n].i);
+  inc_pc(st);
+}
+
+void i_mov_l_st(state_t *st, int m, int n) {
+  mem_st_dw(st->mem, st->gpr[n].i, &st->gpr[m].i);
+  inc_pc(st);
+}
+
+void i_mov_l_ld(state_t *st, int m, int n) {
+  mem_ld_dw(st->mem, st->gpr[m].i, &st->gpr[n].i);
+  inc_pc(st);
+}
+
+void i_add(state_t *st, int m, int n) {
+  st->gpr[n].i += st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_add_i(state_t *st, int imm, int n) {
+  st->gpr[n].i += extend(imm, 8);
+  inc_pc(st);
+}
+
+void i_cmp_eq(state_t *st, int m, int n) {
+  if(st->gpr[n].i == st->gpr[m].i) {
+    st->sr.i |= 1;
   } else {
-    fprintf(stderr, "unknown instruction: %04X\n", inst);
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_cmp_gt(state_t *st, int m, int n) {
+  if(st->gpr[n].i > st->gpr[m].i) {
+    st->sr.i |= 1;
+  } else {
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_sub(state_t *st, int m, int n) {
+  st->gpr[n].i -= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_and(state_t *st, int m, int n) {
+  st->gpr[n].i &= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_not(state_t *st, int m, int n) {
+  st->gpr[n].i = ~st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_or(state_t *st, int m, int n) {
+  st->gpr[n].i |= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_xor(state_t *st, int m, int n) {
+  st->gpr[n].i ^= st->gpr[m].i;
+  inc_pc(st);
+}
+
+void i_shld(state_t *st, int m, int n) {
+  if(st->gpr[m].i >= 0) {
+    st->gpr[n].i <<= st->gpr[m].i;
+  } else {
+    st->gpr[n].i >>= -st->gpr[m].i;
+  }
+  inc_pc(st);
+}
+
+void i_fldi0(state_t *st, int n) {
+  st->fr[n].i = 0x00000000;
+  inc_pc(st);
+}
+
+void i_fldi1(state_t *st, int n) {
+  st->fr[n].i = 0x3F800000;
+  inc_pc(st);
+}
+
+void i_fmov(state_t *st, int m, int n) {
+  st->fr[n].i = st->fr[m].i;
+  inc_pc(st);
+}
+
+void i_fmov_s_ld(state_t *st, int m, int n) {
+  mem_ld_dw(st->mem, st->gpr[m].i, &st->fr[n].i);
+  inc_pc(st);
+}
+
+void i_fmov_s_st(state_t *st, int m, int n) {
+  mem_st_dw(st->mem, st->gpr[n].i, &st->fr[m].i);
+  inc_pc(st);
+}
+
+void i_fadd(state_t *st, int m, int n) {
+  st->fr[n].f += st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_fcmp_eq(state_t *st, int m, int n) {
+  if(st->fr[n].f == st->fr[m].f) {
+    st->sr.i |= 1;
+  } else {
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_fcmp_gt(state_t *st, int m, int n) {
+  if(st->fr[n].f > st->fr[m].f) {
+    st->sr.i |= 1;
+  } else {
+    st->sr.i &= ~1;
+  }
+  inc_pc(st);
+}
+
+void i_fdiv(state_t *st, int m, int n) {
+  st->fr[n].f /= st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_fmul(state_t *st, int m, int n) {
+  st->fr[n].f *= st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_fneg(state_t *st, int n) {
+  st->fr[n].f = -st->fr[n].f;
+  inc_pc(st);
+}
+
+void i_fsqrt(state_t *st, int n) {
+  st->fr[n].f = sqrtf(st->fr[n].f);
+  inc_pc(st);
+}
+
+void i_fsub(state_t *st, int m, int n) {
+  st->fr[n].f -= st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_bf(state_t *st, int disp) {
+  if(!(st->sr.i & 1)) {
+    st->pc.i += extend(disp, 8)*2 + 4;
   }
 }
 
-void run(data_t *reg, data_t *mem, inst_t *inst, int noi) {
-  int pc = 0;
-  while(pc < noi) {
-    exec_inst(reg, mem, inst, &pc);
+void i_bt(state_t *st, int disp) {
+  if(st->sr.i & 1) {
+    st->pc.i += extend(disp, 8)*2 + 4;
+  }
+}
+
+void i_bra(state_t *st, int disp) {
+  st->pc.i += extend(disp, 12)*2 + 4;
+}
+
+void i_jmp(state_t *st, int n) {
+  st->pc.i = st->gpr[n].i;
+}
+
+void i_lds(state_t *st, int n) {
+  st->fpul.i = st->gpr[n].i;
+  inc_pc(st);
+}
+
+void i_sts(state_t *st, int n) {
+  st->gpr[n].i = st->fpul.i;
+  inc_pc(st);
+}
+
+void i_flds(state_t *st, int n) {
+  st->fpul.i = st->fr[n].i;
+  inc_pc(st);
+}
+
+void i_fsts(state_t *st, int n) {
+  st->fr[n].i = st->fpul.i;
+  inc_pc(st);
+}
+
+void i_ftrc(state_t *st, int m) {
+  st->fpul.i = (int)st->fr[m].f;
+  inc_pc(st);
+}
+
+void i_float(state_t *st, int n) {
+  st->fr[n].f = (float)st->fpul.i;
+  inc_pc(st);
+}
+
+void inst_error(int inst) {
+  fprintf(stderr, "Unknown instruction: %08X\n", inst);
+}
+
+int exec_inst(state_t *st) {
+  int inst;
+  memcpy(&inst, st->mem + st->pc.i, 2);
+  fprintf(stderr, "exec: %04X\n", inst);
+  
+  int opcode = inst >> 12;
+  if(opcode == 0x7 || opcode == 0x8 || opcode == 0x9 || opcode == 0xE) { /* 4,4,8 form */
+    int param[2];
+    param[0] = 0xF & (inst >> 8);
+    param[1] = 0xFF & inst;
+    switch(opcode) {
+    case 0x7:                   /* ADD imm */
+      i_add_i(st, param[1], param[0]);
+      break;
+    case 0x8:
+      switch(param[0]) {
+      case 0x9:                 /* BT */
+        i_bt(st, param[1]);
+        break;
+      case 0xB:                 /* BF */
+        i_bf(st, param[1]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x9:                   /* MOV.L(PC relative) */
+      i_mov_l_disp(st, param[1], param[0]);
+      break;
+    case 0xE:                   /* MOV(imm) */
+      i_mov_i(st, param[1], param[0]);
+      break;
+    default:
+      inst_error(inst);
+      return -1;
+    }
+  } else if(opcode == 0xA) {    /* 4,12 form */
+    int param = 0xFFF & inst;
+    i_bra(st, param);           /* BRA */
+  } else {                      /* 4,4,4,4 form */
+    int param[3];
+    int i;
+    for(i=0; i<3; i++) {
+      param[i] = 0xF & (inst >> (8 - i * 4));
+    }
+    switch(opcode) {
+    case 0x0:                   /* STS */
+      if(param[1] == 0x5 && param[2] == 0xA) {
+        i_sts(st, param[0]);
+      } else {
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x2:
+      switch(param[2]) {
+      case 0x2:                 /* MOV.L(st) */
+        i_mov_l_st(st, param[1], param[0]);
+        break;
+      case 0x9:                 /* AND */
+        i_and(st, param[1], param[0]);
+        break;
+      case 0xA:                 /* XOR */
+        i_xor(st, param[1], param[0]);
+        break;
+      case 0xB:                 /* OR */
+        i_or(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x3:
+      switch(param[2]) {
+      case 0x0:                 /* CMP/EQ */
+        i_cmp_eq(st, param[1], param[0]);
+        break;
+      case 0x7:                 /* CMP/GT */
+        i_cmp_gt(st, param[1], param[0]);
+        break;
+      case 0x8:                 /* SUB */
+        i_sub(st, param[1], param[0]);
+        break;
+      case 0xC:                 /* ADD */
+        i_add(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x4:
+      switch(param[2]) {
+      case 0xA:
+        if(param[1] == 0x5) {   /* LDS */
+          i_lds(st, param[0]);
+        } else {
+          inst_error(inst);
+          return -1;
+        }
+        break;
+      case 0xB:
+        if(param[1] == 0x2) {   /* JMP */
+          i_jmp(st, param[0]);
+        } else {
+          inst_error(inst);
+          return -1;
+        }
+        break;
+      case 0xD:                 /* SHLD */
+        i_shld(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0x6:
+      switch(param[2]) {
+      case 0x2:                 /* MOV.L(ld) */
+        i_mov_l_ld(st, param[1], param[0]);
+        break;
+      case 0x3:                 /* MOV */
+        i_mov(st, param[1], param[0]);
+        break;
+      case 0x7:                 /* NOT */
+        i_not(st, param[1], param[0]);
+        break;
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    case 0xF:
+      switch(param[2]) {
+      case 0x0:                 /* FADD */
+        i_fadd(st, param[1], param[0]);
+        break;
+      case 0x1:                 /* FSUB */
+        i_fsub(st, param[1], param[0]);
+        break;
+      case 0x2:                 /* FMUL */
+        i_fmul(st, param[1], param[0]);
+        break;
+      case 0x3:                 /* FDIV */
+        i_fdiv(st, param[1], param[0]);
+        break;
+      case 0x4:                 /* FCMP/EQ */
+        i_fcmp_eq(st, param[1], param[0]);
+        break;
+      case 0x5:                 /* FCMP/GT */
+        i_fcmp_gt(st, param[1], param[0]);
+        break;
+      case 0x8:                 /* FMOV.S(ld) */
+        i_fmov_s_ld(st, param[1], param[0]);
+        break;
+      case 0xA:                 /* FMOV.S(st) */
+        i_fmov_s_st(st, param[1], param[0]);
+        break;
+      case 0xB:
+        switch(param[1]) {
+        case 0x4:               /* FNEG */
+          i_fneg(st, param[0]);
+          break;
+        case 0x6:               /* FSQRT */
+          i_fsqrt(st, param[0]);
+          break;
+        case 0x8:               /* FLDI0 */
+          i_fldi0(st, param[0]);
+          break;
+        case 0x9:               /* FLDI1 */
+          i_fldi1(st, param[0]);
+          break;
+        default:
+          inst_error(inst);
+          return -1;
+        }
+      default:
+        inst_error(inst);
+        return -1;
+      }
+      break;
+    default:
+      inst_error(inst);
+      return -1;
+    }
+  }
+  return 0;
+}
+
+void run(state_t *st, int noi) {
+  st->pc.i = 0;
+  while(st->pc.i < noi * 2) {
+    show_status(st);
+    if(exec_inst(st) < 0) break;
   }
 }
