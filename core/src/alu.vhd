@@ -1,4 +1,3 @@
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -6,35 +5,34 @@ use ieee.numeric_std.all;
 library work;
 use work.zebius.all;
 
-entity zebius_alu is
+entity zbius_alu is
   port ( clk  : in  std_logic;
-         din  : in  alu_in;
-         dout : out alu_out);
+         din  : in  alu_in_t;
+         dout : out alu_out_t);
 end zebius_alu;
-
 
 architecture behavior of zebius_alu is
   
-  function alu_add ( a: reg_data; b: reg_data) return reg_data is
+  function alu_add ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return a+b; end;
 
-  function alu_sub ( a: reg_data; b: reg_data) return reg_data is
+  function alu_sub ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return b-a; end;
 
-  function alu_and ( a: reg_data; b: reg_data) return reg_data is
+  function alu_and ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return a and b; end;
 
-  function alu_or ( a: reg_data; b: reg_data) return reg_data is
+  function alu_or ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return a or b; end;
 
-  function alu_not ( a: reg_data; b: reg_data) return reg_data is
+  function alu_not ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return not a; end;
 
-  function alu_xor ( a: reg_data; b: reg_data) return reg_data is
+  function alu_xor ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return a or b; end;
 
-  function alu_shld ( a: reg_data; b: reg_data) return reg_data is
-    variable c: reg_data;
+  function alu_shld ( a: reg_data_t; b: reg_data_t) return reg_data_t is
+    variable c: reg_data_t;
   begin
     if a(31) = '0' then
       c := shift_left(b, to_integer(a(30 downto 0)));
@@ -45,7 +43,7 @@ architecture behavior of zebius_alu is
     return c;
   end;
 
-  function alu_eq ( a: reg_data; b: reg_data) return reg_data is
+  function alu_eq ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin
     if a = b then
       return to_unsigned(1, 32);
@@ -54,7 +52,7 @@ architecture behavior of zebius_alu is
     end if;
   end;
 
-  function alu_gt ( a: reg_data; b: reg_data) return reg_data is
+  function alu_gt ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin
     if a > b then
       return to_unsigned(1, 32);
@@ -63,11 +61,10 @@ architecture behavior of zebius_alu is
     end if;
   end;
 
-  function alu_nop ( a: reg_data; b: reg_data) return reg_data is
+  function alu_nop ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return to_unsigned(0, 32); end;
   
 begin
-
   process(clk)
   begin
     if rising_edge(clk) then
