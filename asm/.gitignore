@@ -1,0 +1,9 @@
+.omakedb*
+*.omc
+*.cm?
+*.o
+asmLexer.ml
+asmParser.ml
+asmParser.mli
+zasm
+zasm.run
