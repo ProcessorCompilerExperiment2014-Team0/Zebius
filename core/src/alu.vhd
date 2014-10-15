@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.zebius.all;
 
-entity zbius_alu is
+entity zebius_alu is
   port ( clk  : in  std_logic;
          din  : in  alu_in_t;
          dout : out alu_out_t);
