@@ -9,6 +9,9 @@ package zebius is
   -- common data
   subtype reg_data_t is unsigned(31 downto 0);
 
+  -- zebius_core
+  subtype alu_inst_t is unsigned(15 downto 0);
+
   -- zebius_alu
   subtype alu_inst_t is unsigned(3 downto 0);
 
