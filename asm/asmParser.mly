@@ -10,22 +10,58 @@
 %token EOF
 
 
-%start main
-%type <AsmSyntax.inst list> main
+%start insts
+%type <AsmSyntax.inst list> insts
 
 %%
 
-main:
-| inst EOL main {$1::$3}
-| {[]}
+insts:
+| inst eols insts {$1::$3}
+| EOF {[]}
 ;
 
 inst:
-| mn args {($1,$2)}
+| mn args {(None,$1,$2)}
+| LABEL mn args {(Some $1,$2,$3)}
 ;
 
 mn:
-| {M_ADD}
+| MOV {M_MOV}
+| MOV_L {M_MOV_L}
+| STS {M_STS}
+| ADD {M_ADD}
+| CMP_EQ {M_CMP_EQ}
+| CMP_GT {M_CMP_GT}
+| SUB {M_SUB}
+| AND {M_AND}
+| NOT {M_NOT}
+| OR {M_OR}
+| XOR {M_XOR}
+| SHLD {M_SHLD}
+| BF {M_BF}
+| BT {M_BT}
+| BRA {M_BRA}
+| JMP {M_JMP}
+| JSR {M_JSR}
+| RTS {M_RTS}
+| FLDI0 {M_FLDI0}
+| FLDI1 {M_FLDI1}
+| FMOV {M_FMOV}
+| FMOV_S {M_FMOV_S}
+| FADD {M_FADD}
+| FCMP_EQ {M_FCMP_EQ}
+| FCMP_GT {M_FCMP_GT}
+| FDIV {M_FDIV}
+| FMUL {M_FMUL}
+| FNEG {M_FNEG}
+| FSQRT {M_FSQRT}
+| FSUB {M_FSUB}
+| LDS {M_LDS}
+| FLDS {M_FLDS}
+| FSTS {M_FSTS}
+| FTRC {M_FTRC}
+| FLOAT {M_FLOAT}
+;
 
 args:
 | args1 {$1}
@@ -45,6 +81,11 @@ arg:
 | PC {A_PC}
 | FPUL {A_FPUL}
 | PR {A_PR}
-| LABEL {A_Label $1}
 | DISP_PC {A_Disp_PC $1}
+| LABEL {A_Label $1}
+;
+
+eols:
+| EOL {()}
+| EOL eols {()}
 ;

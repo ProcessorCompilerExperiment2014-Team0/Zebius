@@ -6,10 +6,10 @@ type arg =
   | A_PC
   | A_FPUL
   | A_PR
-  | A_Label of string
   | A_Disp_PC of int
+  | A_Label of string
 
-type mn =
+type mnemonic =
   | M_MOV
   | M_MOV_L
   | M_STS
@@ -47,4 +47,4 @@ type mn =
   | M_FLOAT
 
 
-type inst = mn * arg list
+type inst = string option * mnemonic * arg list

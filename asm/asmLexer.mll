@@ -56,9 +56,11 @@ rule token = parse
   | "@(" digit+ "*,PC)" as s {DISP_PC (int_of_string (sub s 2 (length s - index s '*' - 2)))}
   | ',' {COMMA}
   | ';'[^'\n']* {token lexbuf}
-  | '\n' {EOL}
   | '#' num as s {IMMD (int_of_string (suffix s 1))}
   | "FR" digit+ as s {FR (int_of_string (suffix s 2))}
   | "@R" digit+ as s {AT_R (int_of_string (suffix s 2))}
   | 'R' digit+ as s {R (int_of_string (suffix s 1))}
+  | '\n' {EOL}
+  | eof {EOF}
   | ident as s {LABEL s}
+  | _ {failwith ("unknown token: " ^ Lexing.lexeme lexbuf)}
