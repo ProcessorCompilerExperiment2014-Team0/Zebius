@@ -56,6 +56,7 @@ void show_instructions(char *mem, int noi) {
 
 void show_status(state_t *st) {
   int i;
+  fprintf(stderr, "PC   : %08X = %11d\n", st->pc.i, st->pc.i);
   for(i=0; i<NUM_OF_GPR; i++) {
     fprintf(stderr, "R  %2d: %08X = %11d\n", i, st->gpr[i].i, st->gpr[i].i);
   }

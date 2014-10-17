@@ -6,6 +6,8 @@
 #include "main.h"
 #include "exec.h"
 
+#define debug
+
 /* sign extend v as (len) bits integer */
 int extend(int v, int len) {
   if(v >> (len - 1) & 1) {
@@ -244,7 +246,9 @@ void inst_error(int inst) {
 int exec_inst(state_t *st) {
   int inst;
   memcpy(&inst, st->mem + st->pc.i, 2);
+#ifdef debug
   fprintf(stderr, "exec: %04X\n", inst);
+#endif
   
   int opcode = inst >> 12;
   if(opcode == 0x7 || opcode == 0x8 || opcode == 0x9 || opcode == 0xE) { /* 4,4,8 form */
@@ -436,7 +440,9 @@ int exec_inst(state_t *st) {
 void run(state_t *st, int noi) {
   st->pc.i = 0;
   while(st->pc.i < noi * 2) {
+#ifdef debug
     show_status(st);
+#endif
     if(exec_inst(st) < 0) break;
   }
 }
