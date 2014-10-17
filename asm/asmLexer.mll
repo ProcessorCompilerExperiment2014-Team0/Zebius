@@ -54,10 +54,12 @@ rule token = parse
   | "PC" {PC}
   | "FPUL" {FPUL}
   | "PR" {PR}
+  | ".data.l" {DATA_L}
   | "@(" digit+ "*,PC)" as s {DISP_PC (int_of_string (sub s 2 (length s - index s '*' - 2)))}
   | ',' {COMMA}
   | ';'[^'\n']* {token lexbuf}
   | '#' num as s {IMMD (int_of_string (suffix s 1))}
+  | '#' hnum as s {IMMD (int_of_string ("0x" ^ (suffix s 3)))}
   | "FR" digit+ as s {FR (int_of_string (suffix s 2))}
   | "@R" digit+ as s {AT_R (int_of_string (suffix s 2))}
   | 'R' digit+ as s {R (int_of_string (suffix s 1))}

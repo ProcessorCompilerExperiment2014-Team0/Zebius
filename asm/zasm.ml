@@ -10,7 +10,13 @@ let rec align tbl n = function
     let _ = match lbl with
       | None -> ()
       | Some l -> Hashtbl.add tbl l n in
-    (n,m,args)::align tbl (n+1) is
+    match m with
+      | M_DATA_L ->
+        if (n land 1) = 1 then
+          (n,M_MOV,[A_R 0; A_R 0])::align tbl (n+1) ((lbl,m,args)::is)
+        else
+          (n,m,args)::align tbl (n+2) is
+      | _ -> (n,m,args)::align tbl (n+1) is
 
 let put_int1 ot a =
   let l = [a land 0xFF;
@@ -42,6 +48,7 @@ let rec write ot tbl = function
     let _ = match (mn,args) with
       | (M_MOV, [A_Immd i; A_R n]) -> put_int3 ot 0xE n i
       | (M_MOV_L, [A_Disp_PC d; A_R n]) -> put_int3 ot 0x9 n d
+      | (M_MOV_L, [A_Label l; A_R n]) -> put_int3 ot 0x9 n (get_disp tbl place l)
       | (M_MOV, [A_R m; A_R n]) -> put_int4 ot 0x6 n m 0x3
       | (M_MOV_L, [A_R m; A_At_R n]) -> put_int4 ot 0x2 n m 0x2
       | (M_MOV_L, [A_At_R m; A_R n]) -> put_int4 ot 0x3 n m 0x2
@@ -81,6 +88,8 @@ let rec write ot tbl = function
       | (M_FSTS, [A_FPUL; A_FR n]) -> put_int3 ot 0xF n 0x0D
       | (M_FTRC, [A_FR m; A_FPUL]) -> put_int3 ot 0xF m 0x3D
       | (M_FLOAT, [A_FPUL; A_FR n]) -> put_int3 ot 0xF n 0x2D
+      | (M_DATA_L, [A_Immd i]) -> put_int1 ot (i land 0xFFFF);
+        put_int1 ot (i lsr 16);
       | _ -> print_endline "Unknown instruction" in
     write ot tbl is
 

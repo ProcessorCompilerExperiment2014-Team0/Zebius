@@ -45,6 +45,7 @@ type mnemonic =
   | M_FSTS
   | M_FTRC
   | M_FLOAT
+  | M_DATA_L
 
 
 type inst = string option * mnemonic * arg list
