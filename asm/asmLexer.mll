@@ -11,7 +11,7 @@ let digit = ['0'-'9']
 let hdigit = ['0'-'9' 'A'-'F']
 let num = '-'?digit+
 let hnum = "H'"hdigit+
-let alpha = ['a'-'z' 'A'-'Z' '_']
+let alpha = ['a'-'z' 'A'-'Z' '_' '.']
 let ident = alpha (alpha | digit)*
 
 rule token = parse
