@@ -192,12 +192,16 @@ void i_fsub(state_t *st, int m, int n) {
 void i_bf(state_t *st, int disp) {
   if(!(st->sr.i & 1)) {
     st->pc.i += extend(disp, 8)*2 + 4;
+  } else {
+    inc_pc(st);
   }
 }
 
 void i_bt(state_t *st, int disp) {
   if(st->sr.i & 1) {
     st->pc.i += extend(disp, 8)*2 + 4;
+  } else {
+    inc_pc(st);
   }
 }
 
