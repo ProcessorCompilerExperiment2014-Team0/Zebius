@@ -4,7 +4,7 @@
 
 %token <int> R AT_R FR IMMD DISP_PC
 %token <string> LABEL
-%token MOV MOV_L STS ADD CMP_EQ CMP_GT SUB AND NOT OR XOR SHLD BF BT BRA JMP JSR RTS FLDI0 FLDI1 FMOV FMOV_S FADD FCMP_EQ FCMP_GT FDIV FMUL FNEG FSQRT FSUB LDS FLDS FSTS FTRC FLOAT DATA_L PC FPUL PR
+%token MOV MOV_L STS ADD CMP_EQ CMP_GT SUB AND NOT OR XOR SHLD BF BT BRA JMP JSR RTS FLDI0 FLDI1 FMOV FMOV_S FADD FCMP_EQ FCMP_GT FDIV FMUL FNEG FSQRT FSUB LDS FLDS FSTS FTRC FLOAT DATA_L ALIGN PC FPUL PR
 %token COMMA
 %token EOL
 %token EOF
@@ -16,6 +16,7 @@
 %%
 
 insts:
+| eols inst eols insts {$2::$4}
 | inst eols insts {$1::$3}
 | EOF {[]}
 ;
@@ -23,6 +24,7 @@ insts:
 inst:
 | mn args {(None,$1,$2)}
 | LABEL mn args {(Some $1,$2,$3)}
+| LABEL eols mn args {(Some $1,$3,$4)}
 ;
 
 mn:
@@ -62,6 +64,7 @@ mn:
 | FTRC {M_FTRC}
 | FLOAT {M_FLOAT}
 | DATA_L {M_DATA_L}
+| ALIGN {M_ALIGN}
 ;
 
 args:
