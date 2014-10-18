@@ -171,7 +171,6 @@ begin
                dout => alu_out);
 
 
-
   -- twoproc
   comb: process(r)
     variable v : ratch_t;
@@ -186,11 +185,11 @@ begin
           v.core_state := CORE_FETCH_INST;
 
         when CORE_FETCH_INST =>
-          v.inst := array_inst(to_integer(shift_left(v.reg_file(0), 1)));
-          if v.reg_file(0) = 3 then
+          v.inst := array_inst(to_integer(shift_right(v.reg_file(0), 1)));
+          if v.reg_file(0) = 6 then
             v.reg_file(0) := x"00000000";
           else
-            v.reg_file(0) := v.reg_file(0) + 1;
+            v.reg_file(0) := v.reg_file(0) + 2;
           end if;
 
           v.core_state := CORE_DECODE_INST;
@@ -211,6 +210,7 @@ begin
 
             when others => null;
           end case;
+
         when CORE_ALU_WRITE_BACK =>
           v.reg_file(v.writeback) := alu_out.o;
           v.core_state := CORE_FETCH_INST;
