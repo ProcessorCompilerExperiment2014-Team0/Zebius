@@ -6,8 +6,6 @@
 #include "main.h"
 #include "exec.h"
 
-#define debug
-
 /* sign extend v as (len) bits integer */
 int extend(int v, int len) {
   if(v >> (len - 1) & 1) {
@@ -46,6 +44,11 @@ void i_mov_l_disp(state_t *st, int disp, int n) {
 
 void i_mov_l_st(state_t *st, int m, int n) {
   mem_st_dw(st->mem, st->gpr[n].i, &st->gpr[m].i);
+  inc_pc(st);
+}
+
+void i_sts_pr(state_t *st, int n) {
+  st->gpr[n].i = st->pr.i;
   inc_pc(st);
 }
 
@@ -213,12 +216,21 @@ void i_jmp(state_t *st, int n) {
   st->pc.i = st->gpr[n].i;
 }
 
+void i_jsr(state_t *st, int n) {
+  st->pr.i = st->pc.i + 4;
+  st->pc.i = st->gpr[n].i;
+}
+
+void i_rts(state_t *st) {
+  st->pc.i = st->pr.i;
+}
+
 void i_lds(state_t *st, int n) {
   st->fpul.i = st->gpr[n].i;
   inc_pc(st);
 }
 
-void i_sts(state_t *st, int n) {
+void i_sts_fpul(state_t *st, int n) {
   st->gpr[n].i = st->fpul.i;
   inc_pc(st);
 }
@@ -244,15 +256,13 @@ void i_float(state_t *st, int n) {
 }
 
 void inst_error(int inst) {
-  fprintf(stderr, "Unknown instruction: %08X\n", inst);
+  fprintf(stderr, "Unknown instruction: %04X\n", inst);
 }
 
 int exec_inst(state_t *st) {
   int inst;
   memcpy(&inst, st->mem + st->pc.i, 2);
-#ifdef debug
-  fprintf(stderr, "exec: %04X\n", inst);
-#endif
+  fprintf(stderr, "exec: %04X, pc: %d\n", inst, st->pc.i);
   
   int opcode = inst >> 12;
   if(opcode == 0x7 || opcode == 0x8 || opcode == 0x9 || opcode == 0xE) { /* 4,4,8 form */
@@ -296,10 +306,25 @@ int exec_inst(state_t *st) {
       param[i] = 0xF & (inst >> (8 - i * 4));
     }
     switch(opcode) {
-    case 0x0:                   /* STS */
-      if(param[1] == 0x5 && param[2] == 0xA) {
-        i_sts(st, param[0]);
-      } else {
+    case 0x0:
+      switch(param[2]) {
+      case 0xA:                 /* STS */
+        switch(param[1]) {
+        case 0x2:
+          i_sts_pr(st, param[0]);
+          break;
+        case 0x5:
+          i_sts_fpul(st, param[0]);
+          break;
+        default:
+          inst_error(inst);
+          return -1;
+        }
+        break;
+      case 0xB:                 /* RTS */
+        i_rts(st);
+        break;
+      default:
         inst_error(inst);
         return -1;
       }
@@ -345,17 +370,24 @@ int exec_inst(state_t *st) {
     case 0x4:
       switch(param[2]) {
       case 0xA:
-        if(param[1] == 0x5) {   /* LDS */
+        switch(param[1]) {
+        case 0x5:               /* LDS */
           i_lds(st, param[0]);
-        } else {
+          break;
+        default:
           inst_error(inst);
           return -1;
         }
         break;
       case 0xB:
-        if(param[1] == 0x2) {   /* JMP */
+        switch(param[1]) {
+        case 0x0:               /* JSR */
+          i_jsr(st, param[0]);
+          break;
+        case 0x2:               /* JMP */
           i_jmp(st, param[0]);
-        } else {
+          break;
+        default:
           inst_error(inst);
           return -1;
         }
