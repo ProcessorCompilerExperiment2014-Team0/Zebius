@@ -6,7 +6,12 @@ library work;
 
 package zebius_p is
 
+  -- config
+  -- constant u232c_wtime : std_logic_vector(15 downto 0) := x"1adb";
+  constant u232c_wtime : std_logic_vector(15 downto 0) := x"0003";
+  
   -- common data
+  type wdir_t is (DIR_WRITE, DIR_READ);
   subtype reg_data_t is unsigned(31 downto 0);
 
   -- zebius_core

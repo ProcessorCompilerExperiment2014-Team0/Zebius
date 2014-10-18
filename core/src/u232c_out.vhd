@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.ALL;
 
 entity u232c_out is
   generic (wtime: std_logic_vector(15 downto 0) := x"1ADB");
-  Port ( clk  : in  std_logic;
+  port ( clk  : in  std_logic;
          data : in  std_logic_vector (7 downto 0);
          go   : in  std_logic;
          busy : out std_logic;

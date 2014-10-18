@@ -8,13 +8,20 @@ end coretb;
 architecture testbench of coretb is
 
   component zebius_core
-    port ( clk : in std_logic);
+    port ( clk : in std_logic;
+	        rx  : in std_logic;
+			  tx  : out std_logic);
   end component;
 
   signal clk : std_logic;
-  
+
+  signal rx, tx : std_logic;
+
 begin
-  processor : zebius_core port map (clk => clk);
+  processor : zebius_core
+    port map (clk => clk,
+	           rx  => rx,
+				  tx  => tx);
   
   clockgen: process
   begin

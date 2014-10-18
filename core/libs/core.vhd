@@ -8,6 +8,7 @@ use work.zebius_p.all;
 package zebius_core_p is
 
   type zebius_inst_mode_t is (MODE_NOP,
+                              MODE_WRITE,
                               MODE_MOV_IMMEDIATE,
                               MODE_MOV_REGISTER,
                               MODE_ADD_IMMEDIATE,
@@ -26,7 +27,10 @@ package body zebius_core_p is
     variable m : zebius_inst_mode_t := MODE_NOP;
   begin
 
-    if zi.a = "1110" then
+    if zi.a = "0000" and zi.c = "0000"  and zi.d = "0000" then
+      m := MODE_WRITE;
+      
+    elsif zi.a = "1110" then
       -- MOV #i Rn
       m := MODE_MOV_IMMEDIATE;
  
