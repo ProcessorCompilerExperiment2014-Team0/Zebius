@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 library work;
 
-package zebius is
+package zebius_p is
 
   -- common data
   subtype reg_data_t is unsigned(31 downto 0);
@@ -17,21 +17,13 @@ package zebius is
     d : unsigned(3 downto 0);
   end record;
 
+  -- utility
   function zebius_inst(inst : std_logic_vector(15 downto 0))
     return zebius_inst_t;
 
-  -- zebius_alu
-  subtype alu_inst_t is unsigned(3 downto 0);
-
-  type alu_in_t is record
-    inst : alu_inst_t;
-    i1   : reg_data_t;
-    i2   : reg_data_t;
-  end record;
-
-  type alu_out_t is record
-    o : reg_data_t;
-  end record;
+  function signed_resize(n : unsigned;
+                         size : natural)
+    return unsigned;
 
   -- zebius_sram_controller
   type    sram_dir_t  is (SRAM_DIR_WRITE, SRAM_DIR_READ);
@@ -50,9 +42,10 @@ package zebius is
     busy : std_logic;
   end record;
 
-end zebius;
+end zebius_p;
 
-package body zebius is
+package body zebius_p is
+
   function zebius_inst(inst : std_logic_vector(15 downto 0))
     return zebius_inst_t is
   variable v : zebius_inst_t;
@@ -63,4 +56,19 @@ package body zebius is
     v.d := unsigned(inst( 3 downto 0));
     return v;
   end;
-end zebius;
+
+  function signed_resize(n : unsigned;
+                         size : natural)
+    return unsigned  is
+
+    alias m : unsigned(n'length-1 downto 0) is n;
+    variable sn : signed(n'length-1 downto 0);
+    variable esn : signed(size-1 downto 0);
+
+  begin
+    sn := signed(std_logic_vector(m));
+    esn := resize(sn, size);
+    return unsigned(std_logic_vector(esn));
+  end;
+
+end zebius_p;
