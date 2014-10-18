@@ -20,8 +20,8 @@ architecture testbench of coretb is
 begin
   processor : zebius_core
     port map (clk => clk,
-	           rx  => rx,
-				  tx  => tx);
+              rx  => rx,
+              tx  => tx);
   
   clockgen: process
   begin

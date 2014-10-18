@@ -51,12 +51,6 @@ architecture behavior of zebius_core is
                            writeback  => 7,
                            wtime      => 0,
                            serial_write_flag => 0);
-  signal rin : ratch_t := (core_state => CORE_INIT,
-                           reg_file   => (others => x"00000000"),
-                           inst       => zebius_inst(x"0000"),
-                           writeback  => 8,
-                           wtime      => 1,
-                           serial_write_flag => 0);
 
   --- components
   -- ALU
@@ -79,6 +73,8 @@ architecture behavior of zebius_core is
           tx   : out std_logic);    
   end component;
 
+  constant u232c_wtime : std_logic_vector(15 downto 0) := set_u232c_wtime(debug_mode);
+
   signal o_data : std_logic_vector(7 downto 0);
   signal o_go   : std_logic := '0';
   signal o_busy : std_logic;
@@ -91,8 +87,8 @@ architecture behavior of zebius_core is
   type array_inst_t is array (0 to 3) of zebius_inst_t;
   constant array_inst : array_inst_t
     := ( zebius_inst(x"E161"), -- MOV #61 R1
-         zebius_inst(x"0100"), -- WRITE R2
-         zebius_inst(x"E262"), -- MOV #62 R1
+         zebius_inst(x"0100"), -- WRITE R1
+         zebius_inst(x"E262"), -- MOV #62 R2
          zebius_inst(x"0200")  -- WRITE R2
          );
 
@@ -186,10 +182,13 @@ architecture behavior of zebius_core is
 
 begin
   -- components
+
+  debug: if false generate
   alu1: zebius_alu
     port map ( clk  => clk,
                din  => alu_in,
                dout => alu_out);
+  end generate;
 
   rs232c_out : u232c_out generic map (wtime => u232c_wtime)
     port map (
@@ -207,11 +206,11 @@ begin
   begin
     v := r;
 
-      if v.serial_write_flag >0 then
-        v.serial_write_flag := v.serial_write_flag-1;
-      else
-        o_go <= '0';
-      end if;
+    if v.serial_write_flag > 0 then
+      v.serial_write_flag := v.serial_write_flag-1;
+    else
+      o_go <= '0';
+    end if;
 
     if v.wtime /= 0 then
       v.wtime := v.wtime-1;
@@ -240,7 +239,7 @@ begin
               if o_busy = '0' then
                 o_data <= std_logic_vector(v.reg_file(to_integer(v.inst.b)+16)(7 downto 0));
                 o_go   <= '1';
-                v.serial_write_flag := 2;
+                v.serial_write_flag := 1;
                 v.core_state := CORE_FETCH_INST;
               end if;
 

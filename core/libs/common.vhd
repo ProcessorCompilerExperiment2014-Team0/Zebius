@@ -7,8 +7,9 @@ library work;
 package zebius_p is
 
   -- config
-  -- constant u232c_wtime : std_logic_vector(15 downto 0) := x"1adb";
-  constant u232c_wtime : std_logic_vector(15 downto 0) := x"0003";
+  constant debug_mode : boolean := false;
+
+  function set_u232c_wtime (debug : boolean) return std_logic_vector;
   
   -- common data
   type wdir_t is (DIR_WRITE, DIR_READ);
@@ -50,6 +51,11 @@ package zebius_p is
 end zebius_p;
 
 package body zebius_p is
+
+  function set_u232c_wtime (debug : boolean) return std_logic_vector is
+  begin
+    if debug then return x"0004"; else return x"1adb"; end if;
+  end function;
 
   function zebius_inst(inst : std_logic_vector(15 downto 0))
     return zebius_inst_t is
