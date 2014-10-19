@@ -46,6 +46,7 @@ type mnemonic =
   | M_FTRC
   | M_FLOAT
   | M_DATA_L
+  | M_ALIGN
 
 
 type inst = string option * mnemonic * arg list

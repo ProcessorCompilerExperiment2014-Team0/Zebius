@@ -5,8 +5,6 @@
 #define NUM_OF_FR 16
 #define SIZE_OF_SRAM (2 << 22)
 
-#define debug
-
 typedef union {
   float f;
   int i;

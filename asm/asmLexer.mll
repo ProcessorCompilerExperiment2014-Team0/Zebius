@@ -55,7 +55,8 @@ rule token = parse
   | "FPUL" {FPUL}
   | "PR" {PR}
   | ".data.l" {DATA_L}
-  | "@(" digit+ "*,PC)" as s {DISP_PC (int_of_string (sub s 2 (length s - index s '*' - 2)))}
+  | ".align" {ALIGN}
+  | "@(" digit+ "*,PC)" as s {DISP_PC (int_of_string (sub s 2 (length s - index s '*' - 4)))}
   | ',' {COMMA}
   | ';'[^'\n']* {token lexbuf}
   | '#' num as s {IMMD (int_of_string (suffix s 1))}

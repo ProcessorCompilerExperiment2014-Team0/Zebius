@@ -11,12 +11,16 @@ let rec align tbl n = function
       | None -> ()
       | Some l -> Hashtbl.add tbl l n in
     match m with
-      | M_DATA_L ->
-        if (n land 1) = 1 then
-          (n,M_MOV,[A_R 0; A_R 0])::align tbl (n+1) ((lbl,m,args)::is)
-        else
-          (n,m,args)::align tbl (n+2) is
-      | _ -> (n,m,args)::align tbl (n+1) is
+      (* | M_DATA_L -> *)
+      (*   if (n land 1) = 1 then *)
+      (*     (n,M_MOV,[A_R 0; A_R 0])::align tbl (n+1) ((lbl,m,args)::is) *)
+      (*   else *)
+      (*     (n,m,args)::align tbl (n+2) is *)
+    | M_ALIGN ->
+      if (n land 1) = 0 then align tbl n is
+      else (n,M_AND,[A_R 0; A_R 0])::align tbl (n+1) is
+    | M_DATA_L -> (n,m,args)::align tbl (n+2) is
+    | _ -> (n,m,args)::align tbl (n+1) is
 
 let put_int1 ot a =
   let l = [a land 0xFF;
@@ -42,16 +46,21 @@ let get_disp tbl src lbl =
   let dst = Hashtbl.find tbl lbl in
   dst - src - 2
 
+let get_disp_mov tbl src lbl =
+  let dst = Hashtbl.find tbl lbl in
+  print_endline ((string_of_int src)^","^(string_of_int dst));
+  (dst - src - 1) lsr 1
+
 let rec write ot tbl = function
   | [] -> ()
   | (place,mn,args)::is ->
     let _ = match (mn,args) with
       | (M_MOV, [A_Immd i; A_R n]) -> put_int3 ot 0xE n i
       | (M_MOV_L, [A_Disp_PC d; A_R n]) -> put_int3 ot 0x9 n d
-      | (M_MOV_L, [A_Label l; A_R n]) -> put_int3 ot 0x9 n (get_disp tbl place l)
+      | (M_MOV_L, [A_Label l; A_R n]) -> put_int3 ot 0x9 n (get_disp_mov tbl place l)
       | (M_MOV, [A_R m; A_R n]) -> put_int4 ot 0x6 n m 0x3
       | (M_MOV_L, [A_R m; A_At_R n]) -> put_int4 ot 0x2 n m 0x2
-      | (M_MOV_L, [A_At_R m; A_R n]) -> put_int4 ot 0x3 n m 0x2
+      | (M_MOV_L, [A_At_R m; A_R n]) -> put_int4 ot 0x6 n m 0x2
       | (M_STS, [A_PR; A_R n]) -> put_int3 ot 0x0 n 0x2A
       | (M_ADD, [A_R m; A_R n]) -> put_int4 ot 0x3 n m 0xC
       | (M_ADD, [A_Immd i; A_R n]) -> put_int3 ot 0x7 n i
@@ -64,8 +73,11 @@ let rec write ot tbl = function
       | (M_XOR, [A_R m; A_R n]) -> put_int4 ot 0x2 n m 0xA
       | (M_SHLD, [A_R m; A_R n]) -> put_int4 ot 0x4 n m 0xD
       | (M_BF, [A_Label l]) -> put_int3 ot 0x8 0xB (get_disp tbl place l)
+      | (M_BF, [A_Immd d]) -> put_int3 ot 0x8 0xB d
       | (M_BT, [A_Label l]) -> put_int3 ot 0x8 0x9 (get_disp tbl place l)
+      | (M_BT, [A_Immd d]) -> put_int3 ot 0x8 0x9 d
       | (M_BRA, [A_Label l]) -> put_int2 ot 0xA (get_disp tbl place l)
+      | (M_BRA, [A_Immd d]) -> put_int2 ot 0xA d
       | (M_JMP, [A_At_R n]) -> put_int3 ot 0x4 n 0x2B
       | (M_JSR, [A_At_R n]) -> put_int3 ot 0x4 n 0x0B
       | (M_RTS, []) -> put_int1 ot 0x000B
