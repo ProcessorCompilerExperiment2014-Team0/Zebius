@@ -4,15 +4,17 @@ use ieee.numeric_std.all;
 
 library work;
 use work.zebius_p.all;
+use work.zebius_component_p.all;
 use work.zebius_core_p.all;
 use work.zebius_alu_p.all;
 
 
 entity zebius_core is
   port ( clk : in  std_logic;
-         rx  : in  std_logic;
-         tx  : out std_logic);
+         i   : in  core_in_t;
+         o   : out core_out_t);
 end zebius_core;
+
 
 architecture behavior of zebius_core is
 
@@ -41,44 +43,13 @@ architecture behavior of zebius_core is
     inst       : zebius_inst_t;
     writeback  : reg_index_t;
     wtime      : integer range 0 to 63;
-
-    serial_write_flag : integer range 0 to 2;
   end record;
 
   signal r   : ratch_t := (core_state => CORE_INIT,
                            reg_file   => (others => x"00000000"),
                            inst       => zebius_inst(x"0000"),
                            writeback  => 7,
-                           wtime      => 0,
-                           serial_write_flag => 0);
-
-  --- components
-  -- ALU
-  component zebius_alu is
-    port ( clk  : in  std_logic;
-           dout : out alu_out_t;
-           din  : in  alu_in_t);
-  end component;
-
-  signal alu_in  : alu_in_t;
-  signal alu_out : alu_out_t;
-
-  -- u232c_out
-  component u232c_out is
-    generic (wtime: std_logic_vector(15 downto 0));
-    port (clk  : in  std_logic;
-          data : in  std_logic_vector (7 downto 0);
-          go   : in  std_logic;
-          busy : out std_logic;
-          tx   : out std_logic);    
-  end component;
-
-  constant u232c_wtime : std_logic_vector(15 downto 0) := set_u232c_wtime(debug_mode);
-
-  signal o_data : std_logic_vector(7 downto 0);
-  signal o_go   : std_logic := '0';
-  signal o_busy : std_logic;
-
+                           wtime      => 0);
 
   --- subprograms for each state
   -- CORE_INIT
@@ -93,6 +64,18 @@ architecture behavior of zebius_core is
          );
 
   -- instructions
+  procedure do_write(v    : inout ratch_t;
+                     signal sout_out : in    u232c_out_out_t;
+                     signal sout_in  : out   u232c_out_in_t) is
+  begin
+    if ci.sout.busy = '0' and co.sout.go = '0'; then
+      co.sout.data <= std_logic_vector(v.reg_file(to_integer(v.inst.b)+16)(7 downto 0));
+      co.sout.go   <= '1';
+
+      v.core_state := CORE_FETCH_INST;
+    end if;
+  end;
+
   procedure do_move_immediate(v : inout ratch_t) is
     variable i : reg_data_t;
     variable n : reg_index_t;
@@ -141,9 +124,9 @@ architecture behavior of zebius_core is
     i := signed_resize(v.inst.c & v.inst.d, 32);
     n := to_integer(v.inst.b)+16;
 
-    alu_in.inst <= "0001";
-    alu_in.i1   <= i;
-    alu_in.i2   <= v.reg_file(n);
+    co.alu.inst <= "0001";
+    co.alu.i1   <= i;
+    co.alu.i2   <= v.reg_file(n);
 
     w.wtime := 1;
     w.writeback := n;
@@ -164,9 +147,9 @@ architecture behavior of zebius_core is
     m := to_integer(v.inst.c)+16;
     n := to_integer(v.inst.b)+16;
 
-    alu_in.inst <= ai;
-    alu_in.i1 <= w.reg_file(m);
-    alu_in.i2 <= w.reg_file(n);
+    co.alu.inst <= ai;
+    co.alu.i1   <= w.reg_file(m);
+    co.alu.i2   <= w.reg_file(n);
 
     w.wtime := 1;
     case ai is
@@ -181,36 +164,15 @@ architecture behavior of zebius_core is
   end;
 
 begin
-  -- components
 
-  debug: if false generate
-  alu1: zebius_alu
-    port map ( clk  => clk,
-               din  => alu_in,
-               dout => alu_out);
-  end generate;
-
-  rs232c_out : u232c_out generic map (wtime => u232c_wtime)
-    port map (
-      clk  => clk,
-      data => o_data,
-      go   => o_go,
-      busy => o_busy,
-      tx   => tx);
-
-
-  -- twoproc
   cycle: process(clk)
     variable v : ratch_t;
     variable inst_idx : integer range 0 to 3;
   begin
     v := r;
 
-    if v.serial_write_flag > 0 then
-      v.serial_write_flag := v.serial_write_flag-1;
-    else
-      o_go <= '0';
-    end if;
+    -- reset u232c_out
+    co.sout.go <= '0';
 
     if v.wtime /= 0 then
       v.wtime := v.wtime-1;
@@ -236,12 +198,7 @@ begin
 
           case zebius_inst_mode(v.inst) is
             when MODE_WRITE =>
-              if o_busy = '0' then
-                o_data <= std_logic_vector(v.reg_file(to_integer(v.inst.b)+16)(7 downto 0));
-                o_go   <= '1';
-                v.serial_write_flag := 1;
-                v.core_state := CORE_FETCH_INST;
-              end if;
+              do_write(v, ci.sout, co.sout);
 
             when MODE_MOV_IMMEDIATE =>
               do_move_immediate(v);
@@ -250,18 +207,16 @@ begin
               do_move_register(v);
 
             when MODE_ADD_IMMEDIATE =>
-              do_add_immediate(v, alu_in);
+              do_add_immediate(v, co.alu);
 
             when MODE_ARITH =>
               do_arith(v, alu_in);
-
-              -- when MODE_BRANCH =>
-
+              
             when others => null;
           end case;
 
         when CORE_ALU_WRITE_BACK =>
-          v.reg_file(v.writeback) := alu_out.o;
+          v.reg_file(v.writeback) := ci.alu.o;
           v.core_state := CORE_FETCH_INST;
 
       end case;

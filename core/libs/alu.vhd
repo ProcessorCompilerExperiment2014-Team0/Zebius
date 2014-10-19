@@ -10,16 +10,6 @@ package zebius_alu_p is
   -- type definition
   subtype alu_inst_t is unsigned(3 downto 0);
 
-  type alu_in_t is record
-    inst : alu_inst_t;
-    i1   : reg_data_t;
-    i2   : reg_data_t;
-  end record;
-
-  type alu_out_t is record
-    o : reg_data_t;
-  end record;
-
   -- constant
   constant ALU_INST_NOP  : alu_inst_t := "0000";
   constant ALU_INST_ADD  : alu_inst_t := "0001";
