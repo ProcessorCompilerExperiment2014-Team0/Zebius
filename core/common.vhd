@@ -152,12 +152,11 @@ package body zebius_p is
 
   end;
 
-
   function signed_integer(n : unsigned)
     return integer is
     variable sn : signed(n'length-1 downto 0);    
   begin
-    sn := signed(std_logic_vector(n));
+    sn := signed(n);
     return to_integer(sn);
   end;
 

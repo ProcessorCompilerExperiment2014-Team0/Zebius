@@ -170,8 +170,7 @@ architecture behavior of zebius_core is
   procedure do_branch(v : inout ratch_t) is
     constant t : std_logic := v.reg_file(3)(0);
     constant inst : zebius_inst_t := v.inst;
-    variable pc : integer := signed(std_logic_vector(v.reg_file(0)));
-    variable disp : signed(12 downto 0);
+    variable pc : reg_data_t := v.reg_file(0);
     variable w : ratch_t;
   begin
     w := v;
@@ -179,22 +178,19 @@ architecture behavior of zebius_core is
     if inst.a = "1000" and inst.b = "1011" then
       -- BF disp
       if t = '0' then
-        disp := signed_resize((inst.c & inst.d), 32);
-        pc := pc + (2 * disp) + to_unsigned(4, 32);
+        pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 4);
       end if;
 
     elsif inst.a = "1000" and inst.b = "1001" then
       -- BT disp
       if t = '1' then
-        disp := signed_resize(x"04" + (inst.c & inst.d) * 2, 32);        
-        pc := pc + disp;
+        pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 4);
       end if;
 
     elsif inst.a = "1010" then
       -- BRA disp
-      disp := signed_resize(x"04" + (inst.b & inst.c & inst.d) * 2, 32);
-      pc := pc + disp;
-
+      pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 4);
+ 
     --elsif inst.a = "0100" and inst.d = "1011" then
     --  if inst.c = "0000" then
     --    -- JMP
