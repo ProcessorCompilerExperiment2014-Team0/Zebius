@@ -5,7 +5,6 @@ use ieee.numeric_std.all;
 library work;
 use work.zebius_p.all;
 use work.zebius_component_p.all;
-use work.zebius_alu_p.all;
 
 entity zebius_alu is
   port ( din  : in  alu_in_t;

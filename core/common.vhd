@@ -24,7 +24,8 @@ package zebius_p is
                               MODE_MOV_IMMEDIATE,
                               MODE_MOV_REGISTER,
                               MODE_ADD_IMMEDIATE,
-                              MODE_ARITH);
+                              MODE_ARITH,
+                              MODE_BRANCH);
 
   function zebius_inst_mode (zi : zebius_inst_t)
     return zebius_inst_mode_t;
@@ -52,6 +53,9 @@ package zebius_p is
   function decode_alu_inst (zi : zebius_inst_t)
     return alu_inst_t;
 
+  function signed_integer(n : unsigned)
+    return integer;
+  
   function signed_resize(n : unsigned;
                          size : natural)
     return unsigned;
@@ -106,20 +110,6 @@ package body zebius_p is
     return ai;
   end;
 
-  function signed_resize(n : unsigned;
-                         size : natural)
-    return unsigned  is
-
-    alias m : unsigned(n'length-1 downto 0) is n;
-    variable sn : signed(n'length-1 downto 0);
-    variable esn : signed(size-1 downto 0);
-
-  begin
-    sn := signed(std_logic_vector(m));
-    esn := resize(sn, size);
-    return unsigned(std_logic_vector(esn));
-  end;
-
   function zebius_inst_mode (zi : zebius_inst_t)
     return zebius_inst_mode_t is
     variable m : zebius_inst_mode_t := MODE_NOP;
@@ -147,10 +137,43 @@ package body zebius_p is
       -- (Arith) Rm Rn
       m := MODE_ARITH;
 
+    elsif (zi.a = "1000" and zi.b = "1011") or
+      (zi.a = "1000" and zi.b = "1001") or
+      zi.a = "1010" or
+      (zi.a = "0100" and zi.c = "0010" and zi.d = "1011") or
+      (zi.a = "0100" and zi.c = "0000" and zi.d = "1011") or
+      (zi.a = "0000" and zi.b = "0000" and zi.c = "0000" and zi.d = "1011") then
+      -- (Branch)
+      m := MODE_BRANCH;
+
     end if;
 
     return m;
 
   end;
+
+
+  function signed_integer(n : unsigned)
+    return integer is
+    variable sn : signed(n'length-1 downto 0);    
+  begin
+    sn := signed(std_logic_vector(n));
+    return to_integer(sn);
+  end;
+
+  function signed_resize(n : unsigned;
+                         size : natural)
+    return unsigned  is
+
+    alias m : unsigned(n'length-1 downto 0) is n;
+    variable sn : signed(n'length-1 downto 0);
+    variable esn : signed(size-1 downto 0);
+
+  begin
+    sn := signed(std_logic_vector(m));
+    esn := resize(sn, size);
+    return unsigned(std_logic_vector(esn));
+  end;
+
   
 end zebius_p;

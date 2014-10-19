@@ -8,8 +8,6 @@ use work.zebius_p.all;
 package zebius_component_p is
 
   -- alu
-  subtype alu_inst_t is unsigned(3 downto 0);
-
   type alu_in_t is record
     inst : alu_inst_t;
     i1   : reg_data_t;
@@ -20,7 +18,12 @@ package zebius_component_p is
     o : reg_data_t;
   end record;
 
-  
+  component zebius_alu
+    port ( din  : in  alu_in_t;
+           dout : out alu_out_t);
+  end component;
+
+
   -- u232c_out
   type u232c_out_in_t is record
     data : std_logic_vector (7 downto 0);
@@ -30,6 +33,15 @@ package zebius_component_p is
   type u232c_out_out_t is record
     busy : std_logic;
   end record;
+
+  component u232c_out
+    generic ( wtime: std_logic_vector(15 downto 0));
+    port ( clk  : in  std_logic;
+           data : in  std_logic_vector (7 downto 0);
+           go   : in  std_logic;
+           busy : out std_logic;
+           tx   : out std_logic);
+  end component;
 
 
   -- zebius_sram_controller
@@ -59,5 +71,11 @@ package zebius_component_p is
     alu  : alu_in_t;
     sout : u232c_out_in_t;
   end record;
-  
+
+  component zebius_core
+    port ( clk : in  std_logic;
+           ci  : in  core_in_t;
+           co  : out core_out_t);
+  end component;
+
 end zebius_component_p;

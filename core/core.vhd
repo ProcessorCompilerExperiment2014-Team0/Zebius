@@ -5,14 +5,12 @@ use ieee.numeric_std.all;
 library work;
 use work.zebius_p.all;
 use work.zebius_component_p.all;
-use work.zebius_core_p.all;
-use work.zebius_alu_p.all;
 
 
 entity zebius_core is
   port ( clk : in  std_logic;
-         i   : in  core_in_t;
-         o   : out core_out_t);
+         ci   : in  core_in_t;
+         co   : out core_out_t);
 end zebius_core;
 
 
@@ -55,22 +53,28 @@ architecture behavior of zebius_core is
   -- CORE_INIT
 
   -- CORE_FETCH_INST
-  type array_inst_t is array (0 to 3) of zebius_inst_t;
+  type array_inst_t is array (0 to 10) of zebius_inst_t;
   constant array_inst : array_inst_t
-    := ( zebius_inst(x"E161"), -- MOV #61 R1
-         zebius_inst(x"0100"), -- WRITE R1
-         zebius_inst(x"E262"), -- MOV #62 R2
-         zebius_inst(x"0200")  -- WRITE R2
-         );
+    := ( zebius_inst(x"e00a"),
+         zebius_inst(x"e100"),
+         zebius_inst(x"e201"),
+         zebius_inst(x"e301"),
+         zebius_inst(x"6423"),
+         zebius_inst(x"6233"),
+         zebius_inst(x"334c"),
+         zebius_inst(x"70ff"),
+         zebius_inst(x"3100"),
+         zebius_inst(x"8bf9"),
+         zebius_inst(x"aff4"));
 
   -- instructions
   procedure do_write(v    : inout ratch_t;
                      signal sout_out : in    u232c_out_out_t;
                      signal sout_in  : out   u232c_out_in_t) is
   begin
-    if ci.sout.busy = '0' and co.sout.go = '0'; then
-      co.sout.data <= std_logic_vector(v.reg_file(to_integer(v.inst.b)+16)(7 downto 0));
-      co.sout.go   <= '1';
+    if sout_out.busy = '0' then
+      sout_in.data <= std_logic_vector(v.reg_file(to_integer(v.inst.b)+16)(7 downto 0));
+      sout_in.go   <= '1';
 
       v.core_state := CORE_FETCH_INST;
     end if;
@@ -124,9 +128,9 @@ architecture behavior of zebius_core is
     i := signed_resize(v.inst.c & v.inst.d, 32);
     n := to_integer(v.inst.b)+16;
 
-    co.alu.inst <= "0001";
-    co.alu.i1   <= i;
-    co.alu.i2   <= v.reg_file(n);
+    alu_in.inst <= "0001";
+    alu_in.i1   <= i;
+    alu_in.i2   <= v.reg_file(n);
 
     w.wtime := 1;
     w.writeback := n;
@@ -147,9 +151,9 @@ architecture behavior of zebius_core is
     m := to_integer(v.inst.c)+16;
     n := to_integer(v.inst.b)+16;
 
-    co.alu.inst <= ai;
-    co.alu.i1   <= w.reg_file(m);
-    co.alu.i2   <= w.reg_file(n);
+    alu_in.inst <= ai;
+    alu_in.i1   <= w.reg_file(m);
+    alu_in.i2   <= w.reg_file(n);
 
     w.wtime := 1;
     case ai is
@@ -163,13 +167,65 @@ architecture behavior of zebius_core is
     v := w;
   end;
 
+  procedure do_branch(v : inout ratch_t) is
+    constant t : std_logic := v.reg_file(3)(0);
+    constant inst : zebius_inst_t := v.inst;
+    variable pc : integer := signed(std_logic_vector(v.reg_file(0)));
+    variable disp : signed(12 downto 0);
+    variable w : ratch_t;
+  begin
+    w := v;
+
+    if inst.a = "1000" and inst.b = "1011" then
+      -- BF disp
+      if t = '0' then
+        disp := signed_resize((inst.c & inst.d), 32);
+        pc := pc + (2 * disp) + to_unsigned(4, 32);
+      end if;
+
+    elsif inst.a = "1000" and inst.b = "1001" then
+      -- BT disp
+      if t = '1' then
+        disp := signed_resize(x"04" + (inst.c & inst.d) * 2, 32);        
+        pc := pc + disp;
+      end if;
+
+    elsif inst.a = "1010" then
+      -- BRA disp
+      disp := signed_resize(x"04" + (inst.b & inst.c & inst.d) * 2, 32);
+      pc := pc + disp;
+
+    --elsif inst.a = "0100" and inst.d = "1011" then
+    --  if inst.c = "0000" then
+    --    -- JMP
+    --    w.reg_file(1) := pc+x"4";
+    --  end if;
+
+    --  pc := w.reg_file(to_integer(inst.b)+16);
+
+    elsif inst.a = "0000" and inst.b = "0000" and
+      inst.c = "0000" and inst.d = "1011" then
+      pc := w.reg_file(1);
+
+    end if;
+
+    w.reg_file(0) := pc;
+    w.core_state := CORE_FETCH_INST;
+
+    v := w;
+  end;
+
+  signal mode : zebius_inst_mode_t;
+
 begin
 
   cycle: process(clk)
     variable v : ratch_t;
-    variable inst_idx : integer range 0 to 3;
+    variable inst_idx : integer range 0 to 10;
   begin
     v := r;
+
+    mode <= zebius_inst_mode(v.inst);
 
     -- reset u232c_out
     co.sout.go <= '0';
@@ -186,11 +242,7 @@ begin
           inst_idx := to_integer(shift_right(v.reg_file(0), 1));
           v.inst := array_inst(inst_idx);
 
-          if v.reg_file(0) = 6 then
-            v.reg_file(0) := x"00000000";
-          else
-            v.reg_file(0) := v.reg_file(0) + 2;
-          end if;
+          v.reg_file(0) := v.reg_file(0) + 2;
 
           v.core_state := CORE_DECODE_INST;
 
@@ -210,7 +262,10 @@ begin
               do_add_immediate(v, co.alu);
 
             when MODE_ARITH =>
-              do_arith(v, alu_in);
+              do_arith(v, co.alu);
+
+            when MODE_BRANCH =>
+              do_branch(v);
               
             when others => null;
           end case;
