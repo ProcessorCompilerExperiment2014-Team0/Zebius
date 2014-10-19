@@ -17,7 +17,8 @@ end zebius_core;
 architecture behavior of zebius_core is
 
   --- inner data structures
-  type core_state_t is ( CORE_INIT,
+  type core_state_t is ( CORE_DEBUG,
+                         CORE_INIT,
                          CORE_FETCH_INST,
                          CORE_DECODE_INST,
                          CORE_ALU_WRITE_BACK);
@@ -42,15 +43,15 @@ architecture behavior of zebius_core is
     writeback  : reg_index_t;
     wtime      : integer range 0 to 63;
 
-    serial_write_flag : integer range 0 to 2;
+    serial_write_flag : std_logic;
   end record;
 
-  signal r   : ratch_t := (core_state => CORE_INIT,
+  signal r   : ratch_t := (core_state => CORE_DEBUG,
                            reg_file   => (others => x"00000000"),
                            inst       => zebius_inst(x"0000"),
                            writeback  => 7,
                            wtime      => 0,
-                           serial_write_flag => 0);
+                           serial_write_flag => '0');
 
   --- components
   -- ALU
@@ -184,10 +185,10 @@ begin
   -- components
 
   debug: if false generate
-  alu1: zebius_alu
-    port map ( clk  => clk,
-               din  => alu_in,
-               dout => alu_out);
+    alu1: zebius_alu
+      port map ( clk  => clk,
+                 din  => alu_in,
+                 dout => alu_out);
   end generate;
 
   rs232c_out : u232c_out generic map (wtime => u232c_wtime)
@@ -204,69 +205,78 @@ begin
     variable v : ratch_t;
     variable inst_idx : integer range 0 to 3;
   begin
-    v := r;
+    if rising_edge(clk) then
+      v := r;
 
-    if v.serial_write_flag > 0 then
-      v.serial_write_flag := v.serial_write_flag-1;
-    else
-      o_go <= '0';
+      if v.serial_write_flag = '1' then
+        v.serial_write_flag := '0';
+      else
+        o_go <= '0';
+      end if;
+
+      if v.wtime /= 0 then
+        v.wtime := v.wtime-1;
+      else
+
+        case v.core_state is
+          when CORE_DEBUG =>
+            if o_busy = '0' and o_go = '0' then
+              o_data <= x"61";
+              o_go   <= '1';
+              v.serial_write_flag := '1';
+            end if;
+
+          when CORE_INIT =>
+            v.core_state := CORE_FETCH_INST;
+
+          when CORE_FETCH_INST =>
+            inst_idx := to_integer(shift_right(v.reg_file(0), 1));
+            v.inst := array_inst(inst_idx);
+
+            if v.reg_file(0) = 6 then
+              v.reg_file(0) := x"00000000";
+            else
+              v.reg_file(0) := v.reg_file(0) + 2;
+            end if;
+
+            v.core_state := CORE_DECODE_INST;
+
+          when CORE_DECODE_INST =>
+
+            case zebius_inst_mode(v.inst) is
+              when MODE_WRITE =>
+                if o_busy = '0' then
+                  -- o_data <= std_logic_vector(v.reg_file(to_integer(v.inst.b)+16)(7 downto 0));
+                  o_go   <= '1';
+                  v.serial_write_flag := '1';
+                  v.core_state := CORE_FETCH_INST;
+                end if;
+
+              when MODE_MOV_IMMEDIATE =>
+                do_move_immediate(v);
+
+              when MODE_MOV_REGISTER =>
+                do_move_register(v);
+
+              when MODE_ADD_IMMEDIATE =>
+                do_add_immediate(v, alu_in);
+
+              when MODE_ARITH =>
+                do_arith(v, alu_in);
+
+                -- when MODE_BRANCH =>
+
+              when others => null;
+            end case;
+
+          when CORE_ALU_WRITE_BACK =>
+            v.reg_file(v.writeback) := alu_out.o;
+            v.core_state := CORE_FETCH_INST;
+
+        end case;
+      end if;
+      
+      r <= v;
     end if;
-
-    if v.wtime /= 0 then
-      v.wtime := v.wtime-1;
-    else
-
-      case v.core_state is
-        when CORE_INIT =>
-          v.core_state := CORE_FETCH_INST;
-
-        when CORE_FETCH_INST =>
-          inst_idx := to_integer(shift_right(v.reg_file(0), 1));
-          v.inst := array_inst(inst_idx);
-
-          if v.reg_file(0) = 6 then
-            v.reg_file(0) := x"00000000";
-          else
-            v.reg_file(0) := v.reg_file(0) + 2;
-          end if;
-
-          v.core_state := CORE_DECODE_INST;
-
-        when CORE_DECODE_INST =>
-
-          case zebius_inst_mode(v.inst) is
-            when MODE_WRITE =>
-              if o_busy = '0' then
-                o_data <= std_logic_vector(v.reg_file(to_integer(v.inst.b)+16)(7 downto 0));
-                o_go   <= '1';
-                v.serial_write_flag := 1;
-                v.core_state := CORE_FETCH_INST;
-              end if;
-
-            when MODE_MOV_IMMEDIATE =>
-              do_move_immediate(v);
-
-            when MODE_MOV_REGISTER =>
-              do_move_register(v);
-
-            when MODE_ADD_IMMEDIATE =>
-              do_add_immediate(v, alu_in);
-
-            when MODE_ARITH =>
-              do_arith(v, alu_in);
-
-              -- when MODE_BRANCH =>
-
-            when others => null;
-          end case;
-
-        when CORE_ALU_WRITE_BACK =>
-          v.reg_file(v.writeback) := alu_out.o;
-          v.core_state := CORE_FETCH_INST;
-
-      end case;
-    end if;
-    
-    r <= v;
   end process;
 end behavior;

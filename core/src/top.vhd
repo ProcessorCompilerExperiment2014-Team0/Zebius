@@ -32,7 +32,7 @@ begin
     o => clk);
 
   processor : zebius_core
-    port map (clk   => clk,
-              rx => rs_rx,
-              tx => rs_tx);
+    port map (clk => clk,
+              rx  => rs_rx,
+              tx  => rs_tx);
 end behavior;
