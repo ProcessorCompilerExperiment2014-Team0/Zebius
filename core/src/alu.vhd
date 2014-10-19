@@ -4,11 +4,11 @@ use ieee.numeric_std.all;
 
 library work;
 use work.zebius_p.all;
+use work.zebius_component_p.all;
 use work.zebius_alu_p.all;
 
 entity zebius_alu is
-  port ( clk  : in  std_logic;
-         din  : in  alu_in_t;
+  port ( din  : in  alu_in_t;
          dout : out alu_out_t);
 end zebius_alu;
 
@@ -66,22 +66,21 @@ architecture behavior of zebius_alu is
   begin return to_unsigned(0, 32); end;
   
 begin
-  process(clk)
+
+  process(din)
   begin
-    if rising_edge(clk) then
-      case din.inst is
-        when ALU_INST_ADD  => dout.o <= alu_add(din.i1, din.i2);
-        when ALU_INST_SUB  => dout.o <= alu_sub(din.i1, din.i2);
-        when ALU_INST_AND  => dout.o <= alu_and(din.i1, din.i2);
-        when ALU_INST_OR   => dout.o <= alu_or(din.i1, din.i2);
-        when ALU_INST_NOT  => dout.o <= alu_not(din.i1, din.i2);
-        when ALU_INST_XOR  => dout.o <= alu_xor(din.i1, din.i2);
-        when ALU_INST_SHLD => dout.o <= alu_shld(din.i1, din.i2);
-        when ALU_INST_EQ   => dout.o <= alu_eq(din.i1, din.i2);
-        when ALU_INST_GT   => dout.o <= alu_gt(din.i1, din.i2);
-        when others        => dout.o <= alu_nop(din.i1, din.i2);
-      end case;
-    end if;
+    case din.inst is
+      when ALU_INST_ADD  => dout.o <= alu_add(din.i1, din.i2);
+      when ALU_INST_SUB  => dout.o <= alu_sub(din.i1, din.i2);
+      when ALU_INST_AND  => dout.o <= alu_and(din.i1, din.i2);
+      when ALU_INST_OR   => dout.o <= alu_or(din.i1, din.i2);
+      when ALU_INST_NOT  => dout.o <= alu_not(din.i1, din.i2);
+      when ALU_INST_XOR  => dout.o <= alu_xor(din.i1, din.i2);
+      when ALU_INST_SHLD => dout.o <= alu_shld(din.i1, din.i2);
+      when ALU_INST_EQ   => dout.o <= alu_eq(din.i1, din.i2);
+      when ALU_INST_GT   => dout.o <= alu_gt(din.i1, din.i2);
+      when others        => dout.o <= alu_nop(din.i1, din.i2);
+    end case;
   end process;
 
 end behavior;

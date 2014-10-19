@@ -14,8 +14,7 @@ architecture testbench of coretb is
   end component;
 
   component zebius_alu
-    port ( clk  : in  std_logic;
-           din  : in  alu_in_t;
+    port ( din  : in  alu_in_t;
            dout : out alu_out_t);
   end component;
   
