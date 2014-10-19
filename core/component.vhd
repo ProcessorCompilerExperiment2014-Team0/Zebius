@@ -20,6 +20,7 @@ package zebius_component_p is
     o : reg_data_t;
   end record;
 
+  
   -- u232c_out
   type u232c_out_in_t is record
     data : std_logic_vector (7 downto 0);
@@ -29,6 +30,24 @@ package zebius_component_p is
   type u232c_out_out_t is record
     busy : std_logic;
   end record;
+
+
+  -- zebius_sram_controller
+  subtype sram_data_t is unsigned(35 downto 0);
+  subtype sram_addr_t is unsigned(19 downto 0);
+
+  type sram_controller_in_t is record
+    data : sram_data_t;
+    addr : sram_addr_t;
+    dir  : iodir_t;
+    go   : std_logic;
+  end record;
+
+  type sram_controller_out_t is record
+    data : sram_data_t;
+    busy : std_logic;
+  end record;
+
 
   -- core
   type core_in_t is record
