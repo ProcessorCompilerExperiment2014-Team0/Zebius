@@ -474,8 +474,7 @@ int exec_inst(state_t *st) {
 }
 
 void run(state_t *st, int noi) {
-  st->pc.i = 0;
-  while(st->pc.i < noi * 2) {
+  while(st->pc.i != noi * 2) {
 #ifdef debug
     show_status(st);
 #endif
