@@ -1,2 +1,5 @@
 *.o
+*.bak
+tb_core
 work-obj93.cf
+*.ghw
