@@ -75,6 +75,7 @@ FILES[] =
 	asmSyntax
 	asmParser
 	asmLexer
+	conv
 	zasm
 
 #
