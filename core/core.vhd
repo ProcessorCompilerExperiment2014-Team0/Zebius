@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.zebius_p.all;
 use work.zebius_component_p.all;
+use work.zebius_loader_p.all;
 
 
 entity zebius_core is
@@ -53,19 +54,6 @@ architecture behavior of zebius_core is
   -- CORE_INIT
 
   -- CORE_FETCH_INST
-  type array_inst_t is array (0 to 10) of zebius_inst_t;
-  constant array_inst : array_inst_t
-    := ( zebius_inst(x"e161"), -- 0 MOV #x61 R1
-         zebius_inst(x"0100"), -- 2 WRITE R1
-         zebius_inst(x"e262"), -- 4 MOV #x62 R2
-         zebius_inst(x"0200"), -- 6 WRITE R2
-         zebius_inst(x"affa"), -- 8 BRA start
-         zebius_inst(x"6233"),
-         zebius_inst(x"334c"),
-         zebius_inst(x"70ff"),
-         zebius_inst(x"3100"),
-         zebius_inst(x"8bf9"),
-         zebius_inst(x"aff4"));
 
   -- instructions
   procedure do_write(v    : inout ratch_t;
@@ -217,7 +205,7 @@ begin
 
   cycle: process(clk)
     variable v : ratch_t;
-    variable inst_idx : integer range 0 to 4;
+    variable inst_idx : integer range 0 to array_bound;
   begin
     if rising_edge(clk) then
       v := r;
@@ -236,7 +224,7 @@ begin
             v.core_state := CORE_FETCH_INST;
 
           when CORE_FETCH_INST =>
-            inst_idx := bound(0, to_integer(shift_right(v.reg_file(0), 1)), 4);
+            inst_idx := to_integer(shift_right(v.reg_file(0), 1));
             v.inst := array_inst(inst_idx);
 
             v.reg_file(0) := v.reg_file(0) + 2;

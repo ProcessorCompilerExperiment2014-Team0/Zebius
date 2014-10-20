@@ -1,5 +1,5 @@
 TESTBENCH = tb_core
-OBJECTS = common.o component.o alu.o u232c_out.o core.o tb_core.o
+OBJECTS = common.o component.o loader.o alu.o u232c_out.o core.o tb_core.o
 GHDLC = ghdl
 GHDLFLAGS  = -fexplicit --ieee=synopsys
 GHDL_SIM_OPT = --stop-time=1ms --ieee-asserts=disable
