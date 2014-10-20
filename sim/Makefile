@@ -11,6 +11,8 @@ zsim: main.o exec.o
 
 main.o: main.c main.h exec.h
 
+exec.o: exec.c main.h exec.h
+
 clean:
 	rm -rf $(TARG) *.o
 

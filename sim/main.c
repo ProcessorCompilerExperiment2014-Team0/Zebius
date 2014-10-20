@@ -19,7 +19,7 @@ int get_inst_len(const char *file) {
   return st.st_size / 2;
 }
 
-int initialize(const char *inst_file_path, int *noi, char **mem) {
+int initialize(const char *inst_file_path, int *noi, state_t *st) {
   *noi = get_inst_len(inst_file_path);
   if(*noi < 0) {
     return 1;
@@ -29,9 +29,9 @@ int initialize(const char *inst_file_path, int *noi, char **mem) {
     perror("input file");
     return 1;
   }
-  *mem = malloc(SIZE_OF_SRAM);
+  st->mem = malloc(SIZE_OF_SRAM);
 
-  char *p = *mem;
+  char *p = st->mem;
   int rest = *noi;
   int len;
   while(rest > 0) {
@@ -39,10 +39,19 @@ int initialize(const char *inst_file_path, int *noi, char **mem) {
     p += len*2;
     rest -= len;
   }
-  /* fprintf(stderr, "noi = %d\n", *noi); */
-  /* fprintf(stderr, "initialize.res = %d\n", res); */
 
   fclose(inst_file);
+  st->pc.i = 0;
+  st->sr.i = 0;
+  st->pr.i = 0;
+  st->fpul.i = 0;
+  int i;
+  for(i=0; i<NUM_OF_GPR; i++) {
+    st->gpr[i].i = 0;
+  }
+  for(i=0; i<NUM_OF_FR; i++) {
+    st->fr[i].i = 0;
+  }
 
   return 0;
 }
@@ -72,7 +81,7 @@ int main(int argc, char **argv) {
   }
   state_t st;
   int noi;
-  if(initialize(argv[1], &noi, &st.mem)) {
+  if(initialize(argv[1], &noi, &st)) {
     return 1;
   }
 
