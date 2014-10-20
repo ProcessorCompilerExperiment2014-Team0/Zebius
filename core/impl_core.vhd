@@ -16,7 +16,6 @@ end top;
 
 architecture behavior of top is
 
-  signal clk : std_logic;
   signal ci  : core_in_t;
   signal co  : core_out_t;
 
@@ -27,6 +26,7 @@ begin
   port map (
     i => mclk1,
     o => iclk);
+
   bg: bufg
   port map (
     i => iclk,

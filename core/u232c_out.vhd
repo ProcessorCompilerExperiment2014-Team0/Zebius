@@ -1,14 +1,14 @@
-library ieee;
-use ieee.std_logic_1164.ALL;
-use ieee.std_logic_unsigned.ALL;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity u232c_out is
   generic (wtime: std_logic_vector(15 downto 0) := x"1ADB");
-  port ( clk  : in  std_logic;
-         data : in  std_logic_vector (7 downto 0);
-         go   : in  std_logic;
-         busy : out std_logic;
-         tx   : out std_logic);
+  Port ( clk  : in  STD_LOGIC;
+         data : in  STD_LOGIC_VECTOR (7 downto 0);
+         go   : in  STD_LOGIC;
+         busy : out STD_LOGIC;
+         tx   : out STD_LOGIC);
 end u232c_out;
 
 architecture blackbox of u232c_out is
@@ -24,20 +24,13 @@ begin
           if go='1' then
             sendbuf<=data&"0";
             state<=state-1;
+            countdown<=wtime;
           end if;
         when others=>
           if countdown=0 then
             sendbuf<="1"&sendbuf(8 downto 1);
-            if state="0010" then
-              countdown<= '0' & wtime(15 downto 1) ;
-            else
-              countdown<=wtime;
-            end if;
-            if state = "0001" then
-              state<="1011";
-            else 
-              state<=state-1;
-            end if;
+            countdown<=wtime;
+            state<=state-1;
           else
             countdown<=countdown-1;
           end if;

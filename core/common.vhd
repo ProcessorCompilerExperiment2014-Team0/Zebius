@@ -53,6 +53,11 @@ package zebius_p is
   function decode_alu_inst (zi : zebius_inst_t)
     return alu_inst_t;
 
+  function bound(mini : integer;
+                 val  : integer;
+                 maxi : integer)
+    return integer;
+
   function signed_integer(n : unsigned)
     return integer;
   
@@ -174,5 +179,18 @@ package body zebius_p is
     return unsigned(std_logic_vector(esn));
   end;
 
-  
+  function bound(mini : integer;
+                 val  : integer;
+                 maxi : integer)
+    return integer is
+  begin
+    if (val < mini) then
+      return mini;
+    elsif (val > maxi) then
+      return maxi;
+    else
+      return val;
+    end if;
+  end;
+
 end zebius_p;

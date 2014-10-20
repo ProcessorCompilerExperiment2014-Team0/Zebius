@@ -55,11 +55,11 @@ architecture behavior of zebius_core is
   -- CORE_FETCH_INST
   type array_inst_t is array (0 to 10) of zebius_inst_t;
   constant array_inst : array_inst_t
-    := ( zebius_inst(x"e00a"),
-         zebius_inst(x"e100"),
-         zebius_inst(x"e201"),
-         zebius_inst(x"e301"),
-         zebius_inst(x"6423"),
+    := ( zebius_inst(x"e161"), -- 0 MOV #x61 R1
+         zebius_inst(x"0100"), -- 2 WRITE R1
+         zebius_inst(x"e262"), -- 4 MOV #x62 R2
+         zebius_inst(x"0200"), -- 6 WRITE R2
+         zebius_inst(x"affa"), -- 8 BRA start
          zebius_inst(x"6233"),
          zebius_inst(x"334c"),
          zebius_inst(x"70ff"),
@@ -178,26 +178,26 @@ architecture behavior of zebius_core is
     if inst.a = "1000" and inst.b = "1011" then
       -- BF disp
       if t = '0' then
-        pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 4);
+        pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 2);
       end if;
 
     elsif inst.a = "1000" and inst.b = "1001" then
       -- BT disp
       if t = '1' then
-        pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 4);
+        pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 2);
       end if;
 
     elsif inst.a = "1010" then
       -- BRA disp
-      pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.c & inst.d))) + 4);
- 
-    --elsif inst.a = "0100" and inst.d = "1011" then
-    --  if inst.c = "0000" then
-    --    -- JMP
-    --    w.reg_file(1) := pc+x"4";
-    --  end if;
+      pc := unsigned(signed(pc) + (2 * signed(unsigned'(inst.b & inst.c & inst.d))) + 2);
 
-    --  pc := w.reg_file(to_integer(inst.b)+16);
+      --elsif inst.a = "0100" and inst.d = "1011" then
+      --  if inst.c = "0000" then
+      --    -- JMP
+      --    w.reg_file(1) := pc+x"4";
+      --  end if;
+
+      --  pc := w.reg_file(to_integer(inst.b)+16);
 
     elsif inst.a = "0000" and inst.b = "0000" and
       inst.c = "0000" and inst.d = "1011" then
@@ -217,62 +217,64 @@ begin
 
   cycle: process(clk)
     variable v : ratch_t;
-    variable inst_idx : integer range 0 to 10;
+    variable inst_idx : integer range 0 to 4;
   begin
-    v := r;
+    if rising_edge(clk) then
+      v := r;
 
-    mode <= zebius_inst_mode(v.inst);
+      mode <= zebius_inst_mode(v.inst);
 
-    -- reset u232c_out
-    co.sout.go <= '0';
+      -- reset u232c_out
+      co.sout.go <= '0';
 
-    if v.wtime /= 0 then
-      v.wtime := v.wtime-1;
-    else
+      if v.wtime /= 0 then
+        v.wtime := v.wtime-1;
+      else
 
-      case v.core_state is
-        when CORE_INIT =>
-          v.core_state := CORE_FETCH_INST;
+        case v.core_state is
+          when CORE_INIT =>
+            v.core_state := CORE_FETCH_INST;
 
-        when CORE_FETCH_INST =>
-          inst_idx := to_integer(shift_right(v.reg_file(0), 1));
-          v.inst := array_inst(inst_idx);
+          when CORE_FETCH_INST =>
+            inst_idx := bound(0, to_integer(shift_right(v.reg_file(0), 1)), 4);
+            v.inst := array_inst(inst_idx);
 
-          v.reg_file(0) := v.reg_file(0) + 2;
+            v.reg_file(0) := v.reg_file(0) + 2;
 
-          v.core_state := CORE_DECODE_INST;
+            v.core_state := CORE_DECODE_INST;
 
-        when CORE_DECODE_INST =>
+          when CORE_DECODE_INST =>
 
-          case zebius_inst_mode(v.inst) is
-            when MODE_WRITE =>
-              do_write(v, ci.sout, co.sout);
+            case zebius_inst_mode(v.inst) is
+              when MODE_WRITE =>
+                do_write(v, ci.sout, co.sout);
 
-            when MODE_MOV_IMMEDIATE =>
-              do_move_immediate(v);
+              when MODE_MOV_IMMEDIATE =>
+                do_move_immediate(v);
 
-            when MODE_MOV_REGISTER =>
-              do_move_register(v);
+              when MODE_MOV_REGISTER =>
+                do_move_register(v);
 
-            when MODE_ADD_IMMEDIATE =>
-              do_add_immediate(v, co.alu);
+              when MODE_ADD_IMMEDIATE =>
+                do_add_immediate(v, co.alu);
 
-            when MODE_ARITH =>
-              do_arith(v, co.alu);
+              when MODE_ARITH =>
+                do_arith(v, co.alu);
 
-            when MODE_BRANCH =>
-              do_branch(v);
-              
-            when others => null;
-          end case;
+              when MODE_BRANCH =>
+                do_branch(v);
 
-        when CORE_ALU_WRITE_BACK =>
-          v.reg_file(v.writeback) := ci.alu.o;
-          v.core_state := CORE_FETCH_INST;
+              when others => null;
+            end case;
 
-      end case;
+          when CORE_ALU_WRITE_BACK =>
+            v.reg_file(v.writeback) := ci.alu.o;
+            v.core_state := CORE_FETCH_INST;
+
+        end case;
+      end if;
+
+      r <= v;
     end if;
-    
-    r <= v;
   end process;
 end behavior;
