@@ -60,16 +60,41 @@ package zebius_component_p is
     busy : std_logic;
   end record;
 
+  component sram_controller is
+    port ( clk   : in  std_logic;
+
+           zd    : inout std_logic_vector(31 downto 0);
+           zdp   : inout std_logic_vector(3  downto 0);
+           za    : out   std_logic_vector(19 downto 0);
+           xe1   : out std_logic;
+           e2a   : out std_logic;
+           xe3   : out std_logic;
+           xzbe  : out std_logic_vector(3 downto 0);
+           xga   : out std_logic;
+           xwa   : out std_logic;
+           xzcke : out std_logic;
+           zclkma: out std_logic_vector(1 downto 0);
+           adva  : out std_logic;
+           xft   : out std_logic;
+           xlbo  : out std_logic;
+           zza   : out std_logic;
+
+           din   : in  sram_controller_in_t;
+           dout  : out sram_controller_out_t);
+  end component;
+
 
   -- core
   type core_in_t is record
     alu  : alu_out_t;
     sout : u232c_out_out_t;
+    sram : sram_controller_out_t;
   end record;
 
   type core_out_t is record
     alu  : alu_in_t;
     sout : u232c_out_in_t;
+    sram : sram_controller_in_t;
   end record;
 
   component zebius_core

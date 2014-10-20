@@ -10,8 +10,25 @@ use work.zebius_component_p.all;
 
 entity top is
     port ( mclk1 : in  std_logic;
+
            rs_rx : in  std_logic;
-           rs_tx : out std_logic);
+           rs_tx : out std_logic
+
+           zd    : inout std_logic_vector(31 downto 0);
+           zdp   : inout std_logic_vector(3  downto 0);
+           za    : out std_logic_vector(19 downto 0);
+           xe1   : out std_logic;
+           e2a   : out std_logic;
+           xe3   : out std_logic;
+           xzbe  : out std_logic_vector(3 downto 0);
+           xga   : out std_logic;
+           xwa   : out std_logic;
+           xzcke : out std_logic;
+           zclkma: out std_logic_vector(1 downto 0);
+           adva  : out std_logic;
+           xft   : out std_logic;
+           xlbo  : out std_logic;
+           zza   : out std_logic);
 end top;
 
 architecture behavior of top is
@@ -48,5 +65,27 @@ begin
                go   => co.sout.go,
                busy => ci.sout.busy,
                tx   => rs_tx);
+
+  sram : sram_controller
+    port map ( clk => zlk,
+
+               zd     => zd,
+               zdp    => zdp,
+               za     => za,
+               xe1    => xe1,
+               e2a    => e2a,
+               xe3    => xe3,
+               xzbe   => xzbe,
+               xga    => xga,
+               xwa    => xwa,
+               xzcke  => xzcke,
+               zclkma => zclkma,
+               adva   => adva,
+               xft    => xft,
+               xlbo   => xlbo,
+               zza    => zza,
+
+               din    => co.sram;
+               dout   => ci.sram);
 
 end behavior;
