@@ -2,8 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library unisim;
-use unisim.vcomponents.all;
+library work;
+use work.zebius_p.all;
+use work.zebius_component_p.all;
 
 entity sram_controller is
     port ( clk   : in  std_logic;
@@ -49,8 +50,8 @@ begin
   zza   <= '0';
   xlbo  <= '1';
 
-  busy <= '0' when state = SRAM_WAIT else
-          '1';
+  dout.busy <= '0' when state = SRAM_WAIT else
+               '1';
   
   process (clk)
   begin
@@ -58,14 +59,14 @@ begin
       case state is
         when SRAM_WAIT =>
           if din.go = '1' then
-            za  <= addr;
-            dout.output <= x"0f0f0f0f";
+            za  <= std_logic_vector(din.addr);
+            dout.data <= x"f0f0f0f0f";
 
             case din.dir is
               when DIR_WRITE =>
                 xwa <= '0';
-                zd  <= din.data(31 downto 0);
-                zdp <= din.data(35 downto 32);
+                zd  <= std_logic_vector(din.data(31 downto 0));
+                zdp <= std_logic_vector(din.data(35 downto 32));
                 state <= SRAM_WRITE;
 
               when DIR_READ =>
@@ -83,7 +84,7 @@ begin
             count <= 5;
 
             if state = SRAM_READ then
-              din <= zdp & zd;
+              dout.data <= unsigned(std_logic_vector'(zdp & zd));
             end if;
           else
             count <= count-1;

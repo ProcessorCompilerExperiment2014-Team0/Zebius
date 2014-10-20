@@ -1,8 +1,8 @@
 TESTBENCH = tb_core
-OBJECTS = common.o component.o loader.o alu.o u232c_out.o sram_controller.o core.o tb_core.o
+OBJECTS = common.o component.o loader.o alu.o u232c_out.o sram_controller.o core.o tb_core.o sim_sram.o
 GHDLC = ghdl
 GHDLFLAGS  = -fexplicit --ieee=synopsys
-GHDL_SIM_OPT = --stop-time=1ms --ieee-asserts=disable
+GHDL_SIM_OPT = --stop-time=1us
 
 .PHONY: clean
 all: $(TESTBENCH)
