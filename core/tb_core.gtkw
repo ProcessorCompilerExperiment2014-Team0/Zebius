@@ -1,0 +1,51 @@
+[*]
+[*] GTKWave Analyzer v3.3.63 (w)1999-2014 BSI
+[*] Mon Oct 20 06:59:36 2014
+[*]
+[dumpfile] "/cygdrive/c/Users/Murase/Dropbox/Zebius/core/tb_core.ghw"
+[dumpfile_mtime] "Mon Oct 20 06:55:32 2014"
+[dumpfile_size] 2065024
+[savefile] "/cygdrive/c/Users/Murase/Dropbox/Zebius/core/tb_core.gtkw"
+[timestart] 16730000000
+[size] 1920 1017
+[pos] -1 -1
+*-29.000000 1140600000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.tb_core.
+[treeopen] top.tb_core.core.
+[sst_width] 211
+[signals_width] 276
+[sst_expanded] 1
+[sst_vpaned_height] 301
+@28
+top.tb_core.clk
+@200
+-
+@22
+#{top.tb_core.sout.data[7:0]} top.tb_core.sout.data[7] top.tb_core.sout.data[6] top.tb_core.sout.data[5] top.tb_core.sout.data[4] top.tb_core.sout.data[3] top.tb_core.sout.data[2] top.tb_core.sout.data[1] top.tb_core.sout.data[0]
+@28
+top.tb_core.sout.go
+top.tb_core.sout.busy
+@22
+#{top.tb_core.sout.countdown[15:0]} top.tb_core.sout.countdown[15] top.tb_core.sout.countdown[14] top.tb_core.sout.countdown[13] top.tb_core.sout.countdown[12] top.tb_core.sout.countdown[11] top.tb_core.sout.countdown[10] top.tb_core.sout.countdown[9] top.tb_core.sout.countdown[8] top.tb_core.sout.countdown[7] top.tb_core.sout.countdown[6] top.tb_core.sout.countdown[5] top.tb_core.sout.countdown[4] top.tb_core.sout.countdown[3] top.tb_core.sout.countdown[2] top.tb_core.sout.countdown[1] top.tb_core.sout.countdown[0]
+#{top.tb_core.sout.state[3:0]} top.tb_core.sout.state[3] top.tb_core.sout.state[2] top.tb_core.sout.state[1] top.tb_core.sout.state[0]
+@28
+top.tb_core.sout.tx
+@200
+-
+@420
+#{top.tb_core.core.r.reg_file[0][31:0]} top.tb_core.core.r.reg_file[0][31] top.tb_core.core.r.reg_file[0][30] top.tb_core.core.r.reg_file[0][29] top.tb_core.core.r.reg_file[0][28] top.tb_core.core.r.reg_file[0][27] top.tb_core.core.r.reg_file[0][26] top.tb_core.core.r.reg_file[0][25] top.tb_core.core.r.reg_file[0][24] top.tb_core.core.r.reg_file[0][23] top.tb_core.core.r.reg_file[0][22] top.tb_core.core.r.reg_file[0][21] top.tb_core.core.r.reg_file[0][20] top.tb_core.core.r.reg_file[0][19] top.tb_core.core.r.reg_file[0][18] top.tb_core.core.r.reg_file[0][17] top.tb_core.core.r.reg_file[0][16] top.tb_core.core.r.reg_file[0][15] top.tb_core.core.r.reg_file[0][14] top.tb_core.core.r.reg_file[0][13] top.tb_core.core.r.reg_file[0][12] top.tb_core.core.r.reg_file[0][11] top.tb_core.core.r.reg_file[0][10] top.tb_core.core.r.reg_file[0][9] top.tb_core.core.r.reg_file[0][8] top.tb_core.core.r.reg_file[0][7] top.tb_core.core.r.reg_file[0][6] top.tb_core.core.r.reg_file[0][5] top.tb_core.core.r.reg_file[0][4] top.tb_core.core.r.reg_file[0][3] top.tb_core.core.r.reg_file[0][2] top.tb_core.core.r.reg_file[0][1] top.tb_core.core.r.reg_file[0][0]
+@29
+top.tb_core.core.mode
+@22
+#{top.tb_core.core.r.inst.a[3:0]} top.tb_core.core.r.inst.a[3] top.tb_core.core.r.inst.a[2] top.tb_core.core.r.inst.a[1] top.tb_core.core.r.inst.a[0]
+#{top.tb_core.core.r.inst.b[3:0]} top.tb_core.core.r.inst.b[3] top.tb_core.core.r.inst.b[2] top.tb_core.core.r.inst.b[1] top.tb_core.core.r.inst.b[0]
+#{top.tb_core.core.r.inst.c[3:0]} top.tb_core.core.r.inst.c[3] top.tb_core.core.r.inst.c[2] top.tb_core.core.r.inst.c[1] top.tb_core.core.r.inst.c[0]
+#{top.tb_core.core.r.inst.d[3:0]} top.tb_core.core.r.inst.d[3] top.tb_core.core.r.inst.d[2] top.tb_core.core.r.inst.d[1] top.tb_core.core.r.inst.d[0]
+@200
+-
+@22
+#{top.tb_core.core.r.reg_file[17][31:0]} top.tb_core.core.r.reg_file[17][31] top.tb_core.core.r.reg_file[17][30] top.tb_core.core.r.reg_file[17][29] top.tb_core.core.r.reg_file[17][28] top.tb_core.core.r.reg_file[17][27] top.tb_core.core.r.reg_file[17][26] top.tb_core.core.r.reg_file[17][25] top.tb_core.core.r.reg_file[17][24] top.tb_core.core.r.reg_file[17][23] top.tb_core.core.r.reg_file[17][22] top.tb_core.core.r.reg_file[17][21] top.tb_core.core.r.reg_file[17][20] top.tb_core.core.r.reg_file[17][19] top.tb_core.core.r.reg_file[17][18] top.tb_core.core.r.reg_file[17][17] top.tb_core.core.r.reg_file[17][16] top.tb_core.core.r.reg_file[17][15] top.tb_core.core.r.reg_file[17][14] top.tb_core.core.r.reg_file[17][13] top.tb_core.core.r.reg_file[17][12] top.tb_core.core.r.reg_file[17][11] top.tb_core.core.r.reg_file[17][10] top.tb_core.core.r.reg_file[17][9] top.tb_core.core.r.reg_file[17][8] top.tb_core.core.r.reg_file[17][7] top.tb_core.core.r.reg_file[17][6] top.tb_core.core.r.reg_file[17][5] top.tb_core.core.r.reg_file[17][4] top.tb_core.core.r.reg_file[17][3] top.tb_core.core.r.reg_file[17][2] top.tb_core.core.r.reg_file[17][1] top.tb_core.core.r.reg_file[17][0]
+#{top.tb_core.core.r.reg_file[18][31:0]} top.tb_core.core.r.reg_file[18][31] top.tb_core.core.r.reg_file[18][30] top.tb_core.core.r.reg_file[18][29] top.tb_core.core.r.reg_file[18][28] top.tb_core.core.r.reg_file[18][27] top.tb_core.core.r.reg_file[18][26] top.tb_core.core.r.reg_file[18][25] top.tb_core.core.r.reg_file[18][24] top.tb_core.core.r.reg_file[18][23] top.tb_core.core.r.reg_file[18][22] top.tb_core.core.r.reg_file[18][21] top.tb_core.core.r.reg_file[18][20] top.tb_core.core.r.reg_file[18][19] top.tb_core.core.r.reg_file[18][18] top.tb_core.core.r.reg_file[18][17] top.tb_core.core.r.reg_file[18][16] top.tb_core.core.r.reg_file[18][15] top.tb_core.core.r.reg_file[18][14] top.tb_core.core.r.reg_file[18][13] top.tb_core.core.r.reg_file[18][12] top.tb_core.core.r.reg_file[18][11] top.tb_core.core.r.reg_file[18][10] top.tb_core.core.r.reg_file[18][9] top.tb_core.core.r.reg_file[18][8] top.tb_core.core.r.reg_file[18][7] top.tb_core.core.r.reg_file[18][6] top.tb_core.core.r.reg_file[18][5] top.tb_core.core.r.reg_file[18][4] top.tb_core.core.r.reg_file[18][3] top.tb_core.core.r.reg_file[18][2] top.tb_core.core.r.reg_file[18][1] top.tb_core.core.r.reg_file[18][0]
+[pattern_trace] 1
+[pattern_trace] 0
