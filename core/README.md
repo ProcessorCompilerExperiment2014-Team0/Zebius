@@ -7,16 +7,16 @@
 	  /rems 必要ないかもしれないファイル
 
 ## TODO
-| TASK | JIKKI/SIM/YET |
+| TASK | FPGA/SIM/YET |
 | :--- | :------: |
-| ALU | SIM |
-| IOコントローラ | SIM |
+| ALU | FPGA |
+| IOコントローラ | FPGA(Output Only) |
 | sramコントローラ | YET |
-| 算術命令の実行 | SIM |
+| 算術命令の実行 | FPGA |
 | 浮動小数点数命令の実行 | YET |
-| データ移動命令(reg)の実行 | SIM |
+| データ移動命令(reg)の実行 | FPGA |
 | データ移動命令(sram)の実行 | YET |
-| 分岐命令の実行 | YET |
-| fibをループで動作させる | YET |
+| 分岐命令の実行 | FPGA |
+| fibをループで動作させる | FPGA |
 | fibを再帰で動作させる | YET |
 | レイトレーサ | YET |
