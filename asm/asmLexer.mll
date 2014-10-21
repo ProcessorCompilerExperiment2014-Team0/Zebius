@@ -16,6 +16,8 @@ let ident = alpha (alpha | digit)*
 
 rule token = parse
   | space+ {token lexbuf}
+  | "WRITE" {WRITE}
+  | "READ" {READ}
   | "MOV" {MOV}
   | "MOV.L" {MOV_L}
   | "STS" {STS}

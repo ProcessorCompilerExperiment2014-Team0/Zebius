@@ -9,6 +9,8 @@ let string_of_label = function
   | Some lbl -> "    ;; "^lbl
 
 let string_of_mn = function
+  | M_WRITE   -> "WRITE  "
+  | M_READ    -> "READ   "
   | M_MOV     -> "MOV    "
   | M_MOV_L   -> "MOV.L  "
   | M_STS     -> "STS    "
@@ -110,6 +112,8 @@ let get_disp_mov tbl src lbl =
 
 let encode tbl (_,place,mn,args) =
   match (mn,args) with
+    | (M_WRITE, [A_R n]) -> enc_int3 0x0 n 0x00
+    | (M_READ, [A_R n]) -> enc_int3 0x0 n 0x01
     | (M_MOV, [A_Immd i; A_R n]) -> enc_int3 0xE n i
     | (M_MOV_L, [A_Disp_PC d; A_R n]) -> enc_int3 0x9 n d
     | (M_MOV_L, [A_Label l; A_R n]) -> enc_int3 0x9 n (get_disp_mov tbl place l)
