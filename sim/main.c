@@ -72,6 +72,8 @@ void show_status(state_t *st) {
   for(i=0; i<NUM_OF_FR; i++) {
     fprintf(stderr, "FR %2d: %08X = %f\n", i, st->fr[i].i, st->fr[i].f);
   }
+  fprintf(stderr, "PR   : %08X\n", st->pr.i);
+  fprintf(stderr, "FPUL : %08X = %f\n", st->fpul.i, st->fpul.f);
 }
 
 int main(int argc, char **argv) {

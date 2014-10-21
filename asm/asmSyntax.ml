@@ -10,6 +10,8 @@ type arg =
   | A_Label of string
 
 type mnemonic =
+  | M_WRITE
+  | M_READ
   | M_MOV
   | M_MOV_L
   | M_STS
