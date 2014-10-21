@@ -15,15 +15,36 @@ int extend(int v, int len) {
 }
 
 void mem_st_dw(char *mem, int addr, int *s) {
+  int old;
+  memcpy(&old, mem+addr, 4);
   memcpy(mem+addr, s, 4);
+  fprintf(stderr, "st: addr = %08X    value = %08X -> %08X\n", addr, old, *s);
 }
 
 void mem_ld_dw(char *mem, int addr, int *d) {
   memcpy(d, mem+addr, 4);
+  fprintf(stderr, "ld: addr = %08X    value = %08X\n", addr, *d);
 }
 
 void inc_pc(state_t *st) {
   st->pc.i += 2;
+}
+
+void i_write(state_t *st, int n) {
+  printf("%02X\n", st->gpr[n].i & 0xFF);
+  inc_pc(st);
+}
+
+void i_read(state_t *st, int n) {
+  int v;
+  fprintf(stderr, "read into R%d: ", n);
+  if(scanf("%X", &v) == EOF) {
+    perror("read");
+    return;
+  }
+  st->gpr[n].i = v & 0xFF;
+  fprintf(stderr, "read: value = %08X\n", st->gpr[n].i);
+  inc_pc(st);
 }
 
 void i_mov_i(state_t *st, int imm, int n) {
@@ -262,7 +283,7 @@ void inst_error(int inst) {
 int exec_inst(state_t *st) {
   int inst;
   memcpy(&inst, st->mem + st->pc.i, 2);
-  fprintf(stderr, "exec: %04X, pc: %d\n", inst, st->pc.i);
+  fprintf(stderr, "exec: %04X, pc: %08X\n", inst, st->pc.i);
   
   int opcode = inst >> 12;
   if(opcode == 0x7 || opcode == 0x8 || opcode == 0x9 || opcode == 0xE) { /* 4,4,8 form */
@@ -308,6 +329,12 @@ int exec_inst(state_t *st) {
     switch(opcode) {
     case 0x0:
       switch(param[2]) {
+      case 0x0:                 /* WRITE */
+        i_write(st, param[0]);
+        break;
+      case 0x1:
+        i_read(st, param[0]);
+        break;
       case 0xA:                 /* STS */
         switch(param[1]) {
         case 0x2:
