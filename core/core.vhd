@@ -21,6 +21,7 @@ architecture behavior of zebius_core is
   type core_state_t is ( CORE_INIT,
                          CORE_FETCH_INST,
                          CORE_DECODE_INST,
+                         CORE_SRAM_WRITE_BACK,
                          CORE_ALU_WRITE_BACK);
 
   type reg_file_t is array (0 to 47) of reg_data_t;
@@ -101,6 +102,70 @@ architecture behavior of zebius_core is
 
     w.reg_file(n) := v.reg_file(m);
     w.core_state  := CORE_FETCH_INST;
+
+    v := w;
+  end;
+
+  procedure do_move_sram_write(v : inout ratch_t;
+                               signal sram_out : in  sram_controller_out_t;
+                               signal sram_in  : out sram_controller_in_t) is
+    variable m, n : reg_index_t;
+    variable addr : reg_data_t;
+    variable w : ratch_t;
+  begin
+    w := v;
+
+    m := to_integer(v.inst.c);
+    n := to_integer(v.inst.b);
+
+    if (sram_out.busy = '0') then
+      sram_in.addr <= v.reg_file(n)(19 downto 0);
+      sram_in.data <= "0000" & v.reg_file(m);
+      sram_in.dir  <= DIR_WRITE;
+      sram_in.go   <= '1';
+
+      w.core_state := CORE_FETCH_INST;
+    end if;
+
+    v := v;
+  end;
+
+  procedure do_sram_read(addr : sram_addr_t;
+                         signal sram_in : out sram_controller_in_t) is
+  begin
+    sram_in.addr <= addr(19 downto 0);
+    sram_in.dir  <= DIR_READ;
+    sram_in.go   <= '1';
+  end;
+
+  
+  procedure do_move_sram_read(v : inout ratch_t;
+                              signal sram_out : in  sram_controller_out_t;                         
+                              signal sram_in : out sram_controller_in_t) is
+    variable m, n : reg_index_t;
+    variable addr : reg_data_t;
+    variable w : ratch_t;
+  begin
+    w := v;    
+
+    if (sram_out.busy = '0') then
+      if v.inst.a = 1001 then
+        n    := to_integer(v.inst.b) + 16;
+        addr := unsigned(signed((v.reg_file(0) - 2) and x"fffffffc") + (4 * signed(unsigned'(v.inst.c & v.inst.d))) + 4);
+
+      elsif v.inst.a = "0110" and v.inst.b = "0010" then
+        m    := to_integer(v.inst.c) + 16;
+        n    := to_integer(v.inst.b) + 16;
+        addr := v.reg_file(m);
+
+      end if;
+
+      do_sram_read(addr(19 downto 0), sram_in);
+      
+      w.writeback  := n;
+      w.core_state := CORE_SRAM_WRITE_BACK;
+
+    end if;
 
     v := w;
   end;
@@ -214,6 +279,7 @@ begin
 
       -- reset u232c_out
       co.sout.go <= '0';
+      co.sram.go <= '0';
 
       if v.wtime /= 0 then
         v.wtime := v.wtime-1;
@@ -243,6 +309,12 @@ begin
               when MODE_MOV_REGISTER =>
                 do_move_register(v);
 
+              when MODE_MOV_SRAM_WRITE =>
+                do_move_sram_write(v, ci.sram, co.sram);
+
+              when MODE_MOV_SRAM_READ =>
+                do_move_sram_read(v, ci.sram, co.sram);
+
               when MODE_ADD_IMMEDIATE =>
                 do_add_immediate(v, co.alu);
 
@@ -258,6 +330,12 @@ begin
           when CORE_ALU_WRITE_BACK =>
             v.reg_file(v.writeback) := ci.alu.o;
             v.core_state := CORE_FETCH_INST;
+
+          when CORE_SRAM_WRITE_BACK =>
+            if (ci.sram.busy = '0') then
+              v.reg_file(v.writeback) := ci.sram.data(31 downto 0);
+              v.core_state := CORE_FETCH_INST;
+            end if;
 
         end case;
       end if;

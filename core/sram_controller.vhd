@@ -9,15 +9,15 @@ use work.zebius_component_p.all;
 entity sram_controller is
     port ( clk   : in  std_logic;
 
-           zd    : inout std_logic_vector(31 downto 0);
-           zdp   : inout std_logic_vector(3  downto 0);
+           zd    : inout std_logic_vector(31 downto 0) := x"0f0f0f0f";
+           zdp   : inout std_logic_vector(3  downto 0) := x"f";
            za    : out   std_logic_vector(19 downto 0);
            xe1   : out std_logic;
            e2a   : out std_logic;
            xe3   : out std_logic;
            xzbe  : out std_logic_vector(3 downto 0);
            xga   : out std_logic;
-           xwa   : out std_logic;
+           xwa   : out std_logic := '1';
            xzcke : out std_logic;
            zclkma: out std_logic_vector(1 downto 0);
            adva  : out std_logic;
@@ -82,6 +82,7 @@ begin
           if count = 0 then
             state <= SRAM_WAIT;
             count <= 5;
+            xwa <= '1';
 
             if state = SRAM_READ then
               dout.data <= unsigned(std_logic_vector'(zdp & zd));

@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+library work;
+
 package sramsim is
   component GS8160Z18 is
     generic (
