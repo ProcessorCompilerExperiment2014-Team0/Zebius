@@ -2,11 +2,13 @@ open AsmSyntax
 open Printf
 
 let string_of_label = function
-  (* | None -> String.make 16 ' ' *)
-  (* | Some lbl -> let len = String.length lbl in *)
-  (*   lbl ^ String.make (max (16-len) 0) ' ' *)
-  | None -> ""
-  | Some lbl -> "    ;; "^lbl
+  | [] -> ""
+  | ls ->
+    let rec go = function
+      | [] -> ""
+      | [l] -> l
+      | l::ls -> l ^ ", " ^ go ls in
+    "    ;; " ^ go ls
 
 let string_of_mn = function
   | M_WRITE   -> "WRITE  "
@@ -68,9 +70,7 @@ let rec string_of_args tbl = function
 let rec align tbl n = function
   | [] -> []
   | (lbl,m,args)::is ->
-    let _ = match lbl with
-      | None -> ()
-      | Some l -> Hashtbl.add tbl l n in
+    List.iter (fun l -> Hashtbl.add tbl l n) lbl;
     match m with
     | M_ALIGN ->
       if (n land 1) = 0 then align tbl n is

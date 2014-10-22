@@ -51,4 +51,4 @@ type mnemonic =
   | M_ALIGN
 
 
-type inst = string option * mnemonic * arg list
+type inst = string list * mnemonic * arg list

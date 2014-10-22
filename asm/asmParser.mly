@@ -4,7 +4,9 @@
 
 %token <int> R AT_R FR IMMD DISP_PC
 %token <string> LABEL
-%token WRITE READ MOV MOV_L STS ADD CMP_EQ CMP_GT SUB AND NOT OR XOR SHLD BF BT BRA JMP JSR RTS FLDI0 FLDI1 FMOV FMOV_S FADD FCMP_EQ FCMP_GT FDIV FMUL FNEG FSQRT FSUB LDS FLDS FSTS FTRC FLOAT DATA_L ALIGN PC FPUL PR
+%token WRITE READ MOV MOV_L STS ADD CMP_EQ CMP_GT SUB AND NOT OR XOR
+SHLD BF BT BRA JMP JSR RTS FLDI0 FLDI1 FMOV FMOV_S FADD FCMP_EQ FCMP_GT
+FDIV FMUL FNEG FSQRT FSUB LDS FLDS FSTS FTRC FLOAT DATA_L ALIGN PC FPUL PR
 %token COMMA
 %token EOL
 %token EOF
@@ -16,15 +18,22 @@
 %%
 
 insts:
-| eols inst eols insts {$2::$4}
-| inst eols insts {$1::$3}
+| eol0 inst1 {$2}
+;
+
+inst1:
+| inst eol0 inst1 {$1::$3}
 | EOF {[]}
 ;
 
 inst:
-| mn args {(None,$1,$2)}
-| LABEL mn args {(Some $1,$2,$3)}
-| LABEL eols mn args {(Some $1,$3,$4)}
+| labels mn args EOL {($1,$2,$3)}
+;
+
+labels:
+| LABEL eol1 labels {$1::$3}
+| LABEL {[$1]}
+| {[]}
 ;
 
 mn:
@@ -91,7 +100,11 @@ arg:
 | LABEL {A_Label $1}
 ;
 
-eols:
-| EOL {()}
-| EOL eols {()}
+eol0:
+| {}
+| eol1 {}
+;
+
+eol1:
+| EOL eol0 {}
 ;
