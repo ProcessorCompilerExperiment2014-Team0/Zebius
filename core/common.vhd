@@ -23,6 +23,8 @@ package zebius_p is
                               MODE_WRITE,
                               MODE_MOV_IMMEDIATE,
                               MODE_MOV_REGISTER,
+                              MODE_MOV_SRAM_WRITE,
+                              MODE_MOV_SRAM_READ,
                               MODE_ADD_IMMEDIATE,
                               MODE_ARITH,
                               MODE_BRANCH);
@@ -132,6 +134,15 @@ package body zebius_p is
       -- MOV Rm Rn / STS PR Rn
       m := MODE_MOV_REGISTER;
 
+    elsif zi.a = "0010" and zi.d = "0010" then
+      -- MOV Rm @Rn
+      m := MODE_MOV_SRAM_WRITE;
+
+    elsif (zi.a = "0110" and zi.d = "0010") or
+      zi.a = 1001 then
+      -- MOV @Rm Rn, MOV.L @(disp, PC) Rn
+      m := MODE_MOV_SRAM_READ;
+      
     elsif zi.a = "0111" then
       -- ADD #imm Rn
       m := MODE_ADD_IMMEDIATE;
