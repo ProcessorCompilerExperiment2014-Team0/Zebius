@@ -31,9 +31,12 @@ end sram_controller;
 
 architecture implementation of sram_controller is
 
-  type sram_state is (sram_wait, sram_read, sram_write);
-  signal state : sram_state := sram_wait;
-  signal count : integer := 100;
+  type ratch_t is record
+    data_delay1 : sram_data_t;
+    data_delay2 : sram_data_t;
+  end record;
+
+  signal r, rin : ratch_t;
 
 begin
 
@@ -49,49 +52,29 @@ begin
   xft   <= '1';  
   zza   <= '0';
   xlbo  <= '1';
-
-  dout.busy <= '0' when state = SRAM_WAIT else
-               '1';
   
+  process (din)
+    variable v : ratch_t := r;
+  begin
+    case din.dir is
+      when DIR_WRITE =>
+        rin.data_delay1 := din.data;
+        za <= din.addr;
+        wa <= 
+  
+      when DIR_READ =>
+        rin.data_delay1 := x"zzzzzzzzz";
+        za <= din.addr;
+        wa <= 
+
+    end case;
+
+    rin <= r;
+  end process;
+
   process (clk)
   begin
-    if rising_edge(clk) then
-      case state is
-        when SRAM_WAIT =>
-          if din.go = '1' then
-            za  <= std_logic_vector(din.addr);
-            dout.data <= x"f0f0f0f0f";
 
-            case din.dir is
-              when DIR_WRITE =>
-                xwa <= '0';
-                zd  <= std_logic_vector(din.data(31 downto 0));
-                zdp <= std_logic_vector(din.data(35 downto 32));
-                state <= SRAM_WRITE;
-
-              when DIR_READ =>
-                xwa <= '1';
-                zd  <= (others => 'Z');
-                zdp <= (others => 'Z');
-                state <= SRAM_READ;
-
-            end case;
-          end if;
-
-        when SRAM_READ | SRAM_WRITE =>
-          if count = 0 then
-            state <= SRAM_WAIT;
-            count <= 5;
-            xwa <= '1';
-
-            if state = SRAM_READ then
-              dout.data <= unsigned(std_logic_vector'(zdp & zd));
-            end if;
-          else
-            count <= count-1;
-          end if;
-
-      end case;
-    end if;
   end process;
+
 end implementation;

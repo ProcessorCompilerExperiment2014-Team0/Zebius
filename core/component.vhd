@@ -52,12 +52,10 @@ package zebius_component_p is
     data : sram_data_t;
     addr : sram_addr_t;
     dir  : iodir_t;
-    go   : std_logic;
   end record;
 
   type sram_controller_out_t is record
     data : sram_data_t;
-    busy : std_logic;
   end record;
 
   component sram_controller is
