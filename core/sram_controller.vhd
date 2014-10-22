@@ -31,12 +31,8 @@ end sram_controller;
 
 architecture implementation of sram_controller is
 
-  type ratch_t is record
-    data_delay1 : sram_data_t;
-    data_delay2 : sram_data_t;
-  end record;
-
-  signal r, rin : ratch_t;
+  signal data1, data2 : sram_data_t;
+  signal dir1, dir2 : iodir_t;
 
 begin
 
@@ -52,29 +48,22 @@ begin
   xft   <= '1';  
   zza   <= '0';
   xlbo  <= '1';
-  
-  process (din)
-    variable v : ratch_t := r;
-  begin
-    case din.dir is
-      when DIR_WRITE =>
-        rin.data_delay1 := din.data;
-        za <= din.addr;
-        wa <= 
-  
-      when DIR_READ =>
-        rin.data_delay1 := x"zzzzzzzzz";
-        za <= din.addr;
-        wa <= 
-
-    end case;
-
-    rin <= r;
-  end process;
+  xwa   <= '0' when din.dir = DIR_WRITE else
+           '1';
+  za    <= std_logic_vector(din.addr);
+  zdp   <= std_logic_vector(din.data(35 downto 32)) when dir2 = DIR_WRITE else
+           (others => 'Z');
+  zd    <= std_logic_vector(din.data(31 downto 0)) when dir2 = DIR_WRITE else
+           (others => 'Z');
 
   process (clk)
   begin
-
+    if rising_edge(clk) then
+      data1 <= din.data;
+      data2 <= data1;
+      dir1  <= din.dir;
+      dir2  <= dir1;
+    end if;
   end process;
 
 end implementation;
