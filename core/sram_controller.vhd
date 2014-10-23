@@ -9,8 +9,8 @@ use work.zebius_component_p.all;
 entity sram_controller is
     port ( clk   : in  std_logic;
 
-           zd    : inout std_logic_vector(31 downto 0) := x"0f0f0f0f";
-           zdp   : inout std_logic_vector(3  downto 0) := x"f";
+           zd    : inout std_logic_vector(31 downto 0);
+           zdp   : inout std_logic_vector(3  downto 0);
            za    : out   std_logic_vector(19 downto 0);
            xe1   : out std_logic;
            e2a   : out std_logic;
@@ -32,14 +32,15 @@ end sram_controller;
 architecture implementation of sram_controller is
 
   signal data1, data2 : sram_data_t;
-  signal dir1, dir2 : iodir_t;
+  signal dir1 : iodir_t := DIR_READ;
+  signal dir2 : iodir_t := DIR_READ;
 
 begin
 
   xe1   <= '0';
   e2a   <= '1';
   xe3   <= '0';
-  xzbe   <= "0000";
+  xzbe   <= (others => '0');
   xga   <= '0';
   xzcke <= '0';
   zclkma(0) <= clk;
@@ -51,10 +52,11 @@ begin
   xwa   <= '0' when din.dir = DIR_WRITE else
            '1';
   za    <= std_logic_vector(din.addr);
-  zdp   <= std_logic_vector(din.data(35 downto 32)) when dir2 = DIR_WRITE else
+  zdp   <= std_logic_vector(data2(35 downto 32)) when dir2 = DIR_WRITE else
            (others => 'Z');
-  zd    <= std_logic_vector(din.data(31 downto 0)) when dir2 = DIR_WRITE else
+  zd    <= std_logic_vector(data2(31 downto 0)) when dir2 = DIR_WRITE else
            (others => 'Z');
+  dout.data <= unsigned(zdp & zd);
 
   process (clk)
   begin
