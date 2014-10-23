@@ -1,5 +1,9 @@
+type immd =
+  | I_Dec of int
+  | I_Hex of int
+
 type arg =
-  | A_Immd of int
+  | A_Immd of immd
   | A_R of int
   | A_At_R of int
   | A_FR of int

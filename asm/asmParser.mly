@@ -2,7 +2,7 @@
   open AsmSyntax
 %}
 
-%token <int> R AT_R FR IMMD DISP_PC
+%token <int> R AT_R FR IMMD_D IMMD_H DISP_PC
 %token <string> LABEL
 %token WRITE READ MOV MOV_L STS ADD CMP_EQ CMP_GT SUB AND NOT OR XOR
 SHLD BF BT BRA JMP JSR RTS FLDI0 FLDI1 FMOV FMOV_S FADD FCMP_EQ FCMP_GT
@@ -89,7 +89,8 @@ args1:
 ;
 
 arg:
-| IMMD {A_Immd $1}
+| IMMD_D {A_Immd (I_Dec $1)}
+| IMMD_H {A_Immd (I_Hex $1)}
 | FR {A_FR $1}
 | AT_R {A_At_R $1}
 | R {A_R $1}
