@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "exec.h"
+#include "fpu.h"
 
 /* sign extend v as (len) bits integer */
 int extend(int v, int len) {
@@ -166,7 +167,8 @@ void i_fmov_s_st(state_t *st, int m, int n) {
 }
 
 void i_fadd(state_t *st, int m, int n) {
-  st->fr[n].f += st->fr[m].f;
+  /* st->fr[n].f += st->fr[m].f; */
+  st->fr[n].u = fadd(st->fr[n].u, st->fr[m].u);
   inc_pc(st);
 }
 
@@ -194,12 +196,14 @@ void i_fdiv(state_t *st, int m, int n) {
 }
 
 void i_fmul(state_t *st, int m, int n) {
-  st->fr[n].f *= st->fr[m].f;
+  /* st->fr[n].f *= st->fr[m].f; */
+  st->fr[n].u = fmul(st->fr[n].u, st->fr[m].u);
   inc_pc(st);
 }
 
 void i_fneg(state_t *st, int n) {
-  st->fr[n].f = -st->fr[n].f;
+  /* st->fr[n].f = -st->fr[n].f; */
+  st->fr[n].u = fneg(st->fr[n].u);
   inc_pc(st);
 }
 
@@ -209,7 +213,8 @@ void i_fsqrt(state_t *st, int n) {
 }
 
 void i_fsub(state_t *st, int m, int n) {
-  st->fr[n].f -= st->fr[m].f;
+  /* st->fr[n].f -= st->fr[m].f; */
+  st->fr[n].u = fsub(st->fr[n].u, st->fr[m].u);
   inc_pc(st);
 }
 
@@ -469,7 +474,7 @@ int exec_inst(state_t *st) {
       case 0xA:                 /* FMOV.S(st) */
         i_fmov_s_st(st, param[1], param[0]);
         break;
-      case 0xB:
+      case 0xD:
         switch(param[1]) {
         case 0x4:               /* FNEG */
           i_fneg(st, param[0]);
@@ -487,6 +492,7 @@ int exec_inst(state_t *st) {
           inst_error(inst);
           return -1;
         }
+        break;
       default:
         inst_error(inst);
         return -1;

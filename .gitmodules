@@ -1,0 +1,3 @@
+[submodule "sim/fpu"]
+	path = sim/fpu
+	url = git@github.com:kazukifujiwara/FPU.git

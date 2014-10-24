@@ -1,6 +1,8 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <stdint.h>
+
 #define NUM_OF_GPR 16
 #define NUM_OF_FR 16
 #define SIZE_OF_SRAM (1 << 22)
@@ -8,6 +10,7 @@
 typedef union {
   float f;
   int i;
+  uint32_t u;
 } data_t;
 
 typedef struct {
