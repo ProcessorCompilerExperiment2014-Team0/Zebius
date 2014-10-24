@@ -35,7 +35,8 @@ package zebius_component_p is
   end record;
 
   component u232c_out
-    generic ( wtime: std_logic_vector(15 downto 0));
+    generic (
+      wtime : std_logic_vector(15 downto 0));
     port ( clk  : in  std_logic;
            data : in  std_logic_vector (7 downto 0);
            go   : in  std_logic;

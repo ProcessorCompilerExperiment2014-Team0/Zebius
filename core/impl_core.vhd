@@ -8,11 +8,11 @@ library work;
 use work.zebius_p.all;
 use work.zebius_component_p.all;
 
-entity top is
+entity cpu is
     port ( mclk1 : in  std_logic;
 
            rs_rx : in  std_logic;
-           rs_tx : out std_logic
+           rs_tx : out std_logic;
 
            zd    : inout std_logic_vector(31 downto 0);
            zdp   : inout std_logic_vector(3  downto 0);
@@ -29,9 +29,9 @@ entity top is
            xft   : out std_logic;
            xlbo  : out std_logic;
            zza   : out std_logic);
-end top;
+end cpu;
 
-architecture behavior of top is
+architecture behavior of cpu is
 
   signal ci  : core_in_t;
   signal co  : core_out_t;
@@ -67,7 +67,7 @@ begin
                tx   => rs_tx);
 
   sram : sram_controller
-    port map ( clk => zlk,
+    port map ( clk => clk,
 
                zd     => zd,
                zdp    => zdp,
@@ -85,7 +85,7 @@ begin
                xlbo   => xlbo,
                zza    => zza,
 
-               din    => co.sram;
+               din    => co.sram,
                dout   => ci.sram);
 
 end behavior;
