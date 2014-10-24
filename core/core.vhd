@@ -3,26 +3,69 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.zebius_p.all;
-use work.zebius_component_p.all;
+use work.zebius_alu_p.all;
+use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_out_p.all;
+
+
+package zebius_core_p is
+
+  type core_in_t is record
+    alu  : alu_out_t;
+    sout : u232c_out_out_t;
+    sram : sram_controller_out_t;
+  end record;
+
+  type core_out_t is record
+    alu  : alu_in_t;
+    sout : u232c_out_in_t;
+    sram : sram_controller_in_t;
+  end record;
+
+  component zebius_core
+    port (
+      clk : in  std_logic;
+      ci  : in  core_in_t;
+      co  : out core_out_t);
+  end component;
+
+end package;
+
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.zebius_alu_p.all;
+use work.zebius_core_p.all;
+use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_out_p.all;
+
+use work.zebius_decode_p.all;
 use work.zebius_loader_p.all;
+use work.zebius_type_p.all;
+use work.zebius_util_p.all;
 
 
 entity zebius_core is
-  port ( clk : in  std_logic;
-         ci   : in  core_in_t;
-         co   : out core_out_t);
+  port (
+    clk : in  std_logic;
+    ci   : in  core_in_t;
+    co   : out core_out_t);
 end zebius_core;
 
 
 architecture behavior of zebius_core is
 
   --- inner data structures
-  type core_state_t is ( CORE_INIT,
-                         CORE_FETCH_INST,
-                         CORE_DECODE_INST,
-                         CORE_SRAM_WRITE_BACK,
-                         CORE_ALU_WRITE_BACK);
+  type core_state_t is (
+    CORE_INIT,
+    CORE_FETCH_INST,
+    CORE_DECODE_INST,
+    CORE_SRAM_WRITE_BACK,
+    CORE_ALU_WRITE_BACK);
 
   type reg_file_t is array (0 to 47) of reg_data_t;
   subtype reg_index_t is integer range 0 to 47;
@@ -45,11 +88,12 @@ architecture behavior of zebius_core is
     wtime      : integer range 0 to 63;
   end record;
 
-  signal r   : ratch_t := (core_state => CORE_INIT,
-                           reg_file   => (others => x"00000000"),
-                           inst       => zebius_inst(x"0000"),
-                           writeback  => 7,
-                           wtime      => 0);
+  signal r   : ratch_t := (
+    core_state => CORE_INIT,
+    reg_file   => (others => x"00000000"),
+    inst       => zebius_inst(x"0000"),
+    writeback  => 7,
+    wtime      => 0);
 
   --- subprograms for each state
   -- CORE_INIT
@@ -57,7 +101,7 @@ architecture behavior of zebius_core is
   -- CORE_FETCH_INST
 
   -- instructions
-  procedure do_write(v    : inout ratch_t;
+  procedure do_write(v : inout ratch_t;
                      signal sout_out : in    u232c_out_out_t;
                      signal sout_in  : out   u232c_out_in_t) is
   begin

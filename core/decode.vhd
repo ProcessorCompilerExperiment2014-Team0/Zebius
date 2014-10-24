@@ -2,16 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library work;
 
-package zebius_p is
+package zebius_decode_p is
 
-  -- common data
-  type iodir_t is (DIR_WRITE, DIR_READ);
-  subtype reg_data_t is unsigned(31 downto 0);
-
-
-  --- zebius_core
   type zebius_inst_t is record
     a : unsigned(3 downto 0);
     b : unsigned(3 downto 0);
@@ -19,21 +12,24 @@ package zebius_p is
     d : unsigned(3 downto 0);
   end record;
 
-  type zebius_inst_mode_t is (MODE_NOP,
-                              MODE_WRITE,
-                              MODE_MOV_IMMEDIATE,
-                              MODE_MOV_REGISTER,
-                              MODE_MOV_SRAM_WRITE,
-                              MODE_MOV_SRAM_READ,
-                              MODE_ADD_IMMEDIATE,
-                              MODE_ARITH,
-                              MODE_BRANCH);
+  type zebius_inst_mode_t is (
+    MODE_NOP,
+    MODE_WRITE,
+    MODE_MOV_IMMEDIATE,
+    MODE_MOV_REGISTER,
+    MODE_MOV_SRAM_WRITE,
+    MODE_MOV_SRAM_READ,
+    MODE_ADD_IMMEDIATE,
+    MODE_ARITH,
+    MODE_BRANCH);
+
+  function zebius_inst (inst : std_logic_vector(15 downto 0))
+    return zebius_inst_t;
 
   function zebius_inst_mode (zi : zebius_inst_t)
     return zebius_inst_mode_t;
 
 
-  --- zebius_alu
   subtype alu_inst_t is unsigned(3 downto 0);
 
   constant ALU_INST_NOP  : alu_inst_t := "0000";
@@ -47,30 +43,13 @@ package zebius_p is
   constant ALU_INST_EQ   : alu_inst_t := "1001";
   constant ALU_INST_GT   : alu_inst_t := "1010";
 
-
-  -- utility
-  function zebius_inst (inst : std_logic_vector(15 downto 0))
-    return zebius_inst_t;
-
   function decode_alu_inst (zi : zebius_inst_t)
     return alu_inst_t;
 
-  function bound(mini : integer;
-                 val  : integer;
-                 maxi : integer)
-    return integer;
-
-  function signed_integer(n : unsigned)
-    return integer;
-  
-  function signed_resize(n : unsigned;
-                         size : natural)
-    return unsigned;
-
-end zebius_p;
+end package;
 
 
-package body zebius_p is
+package body zebius_decode_p is
 
   function zebius_inst(inst : std_logic_vector(15 downto 0))
     return zebius_inst_t is
@@ -168,40 +147,4 @@ package body zebius_p is
 
   end;
 
-  function signed_integer(n : unsigned)
-    return integer is
-    variable sn : signed(n'length-1 downto 0);    
-  begin
-    sn := signed(n);
-    return to_integer(sn);
-  end;
-
-  function signed_resize(n : unsigned;
-                         size : natural)
-    return unsigned  is
-
-    alias m : unsigned(n'length-1 downto 0) is n;
-    variable sn : signed(n'length-1 downto 0);
-    variable esn : signed(size-1 downto 0);
-
-  begin
-    sn := signed(std_logic_vector(m));
-    esn := resize(sn, size);
-    return unsigned(std_logic_vector(esn));
-  end;
-
-  function bound(mini : integer;
-                 val  : integer;
-                 maxi : integer)
-    return integer is
-  begin
-    if (val < mini) then
-      return mini;
-    elsif (val > maxi) then
-      return maxi;
-    else
-      return val;
-    end if;
-  end;
-
-end zebius_p;
+end zebius_decode_p;

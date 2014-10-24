@@ -1,15 +1,44 @@
+library work;
+use work.zebius_type_p.all;
+use work.zebius_decode_p.all;
+
+package zebius_alu_p is
+
+  type alu_in_t is record
+    inst : alu_inst_t;
+    i1   : reg_data_t;
+    i2   : reg_data_t;
+  end record;
+
+  type alu_out_t is record
+    o : reg_data_t;
+  end record;
+
+  component zebius_alu
+    port ( din  : in  alu_in_t;
+           dout : out alu_out_t);
+  end component;
+
+end zebius_alu_p;
+
+
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.zebius_p.all;
-use work.zebius_component_p.all;
+use work.zebius_alu_p.all;
+
+use work.zebius_type_p.all;
+use work.zebius_decode_p.all;
+
 
 entity zebius_alu is
   port ( din  : in  alu_in_t;
          dout : out alu_out_t);
 end zebius_alu;
+
 
 architecture behavior of zebius_alu is
   
