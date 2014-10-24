@@ -7,3 +7,4 @@ asmParser.ml
 asmParser.mli
 zasm
 zasm.run
+sample
