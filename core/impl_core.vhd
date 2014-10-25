@@ -12,23 +12,24 @@ entity cpu is
     port ( mclk1 : in  std_logic;
 
            rs_rx : in  std_logic;
-           rs_tx : out std_logic;
+           rs_tx : out std_logic
 
-           zd    : inout std_logic_vector(31 downto 0);
-           zdp   : inout std_logic_vector(3  downto 0);
-           za    : out std_logic_vector(19 downto 0);
-           xe1   : out std_logic;
-           e2a   : out std_logic;
-           xe3   : out std_logic;
-           xzbe  : out std_logic_vector(3 downto 0);
-           xga   : out std_logic;
-           xwa   : out std_logic;
-           xzcke : out std_logic;
-           zclkma: out std_logic_vector(1 downto 0);
-           adva  : out std_logic;
-           xft   : out std_logic;
-           xlbo  : out std_logic;
-           zza   : out std_logic);
+           --zd    : inout std_logic_vector(31 downto 0);
+           --zdp   : inout std_logic_vector(3  downto 0);
+           --za    : out std_logic_vector(19 downto 0);
+           --xe1   : out std_logic;
+           --e2a   : out std_logic;
+           --xe3   : out std_logic;
+           --xzbe  : out std_logic_vector(3 downto 0);
+           --xga   : out std_logic;
+           --xwa   : out std_logic;
+           --xzcke : out std_logic;
+           --zclkma: out std_logic_vector(1 downto 0);
+           --adva  : out std_logic;
+           --xft   : out std_logic;
+           --xlbo  : out std_logic;
+           --zza   : out std_logic
+           );
 end cpu;
 
 architecture behavior of cpu is
@@ -37,6 +38,22 @@ architecture behavior of cpu is
   signal co  : core_out_t;
 
   signal clk,iclk: std_logic;
+
+  signal zd    : std_logic_vector(31 downto 0);
+  signal zdp   : std_logic_vector(3  downto 0);
+  signal za    : std_logic_vector(19 downto 0);
+  signal xe1   : std_logic;
+  signal e2a   : std_logic;
+  signal xe3   : std_logic;
+  signal xzbe  : std_logic_vector(3 downto 0);
+  signal xga   : std_logic;
+  signal xwa   : std_logic;
+  signal xzcke : std_logic;
+  signal zclkma: std_logic_vector(1 downto 0);
+  signal adva  : std_logic;
+  signal xft   : std_logic;
+  signal xlbo  : std_logic;
+  signal zza   : std_logic;
   
 begin
   ib: ibufg
@@ -66,26 +83,26 @@ begin
                busy => ci.sout.busy,
                tx   => rs_tx);
 
-  sram : sram_controller
-    port map ( clk => clk,
+  --sram : sram_controller
+  --  port map ( clk => clk,
 
-               zd     => zd,
-               zdp    => zdp,
-               za     => za,
-               xe1    => xe1,
-               e2a    => e2a,
-               xe3    => xe3,
-               xzbe   => xzbe,
-               xga    => xga,
-               xwa    => xwa,
-               xzcke  => xzcke,
-               zclkma => zclkma,
-               adva   => adva,
-               xft    => xft,
-               xlbo   => xlbo,
-               zza    => zza,
+  --             zd     => zd,
+  --             zdp    => zdp,
+  --             za     => za,
+  --             xe1    => xe1,
+  --             e2a    => e2a,
+  --             xe3    => xe3,
+  --             xzbe   => xzbe,
+  --             xga    => xga,
+  --             xwa    => xwa,
+  --             xzcke  => xzcke,
+  --             zclkma => zclkma,
+  --             adva   => adva,
+  --             xft    => xft,
+  --             xlbo   => xlbo,
+  --             zza    => zza,
 
-               din    => co.sram,
-               dout   => ci.sram);
+  --             din    => co.sram,
+  --             dout   => ci.sram);
 
 end behavior;
