@@ -7,4 +7,5 @@
         ADD R4,R3
         ADD #-1,R0
         CMP/EQ R0,R1
+		WRITE R2
         BF .loop
