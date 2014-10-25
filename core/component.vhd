@@ -36,6 +36,7 @@ package zebius_component_p is
 
   component u232c_out
     generic (
+      debug : boolean := false;
       wtime : std_logic_vector(15 downto 0));
     port ( clk  : in  std_logic;
            data : in  std_logic_vector (7 downto 0);

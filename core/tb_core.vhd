@@ -46,7 +46,8 @@ begin
                dout => ci.alu);
 
   sout : u232c_out
-    generic map ( wtime => x"0005" )
+    generic map ( debug => true,
+                  wtime => x"0005" )
     port map ( clk  => clk,
                data => co.sout.data,
                go   => co.sout.go,
