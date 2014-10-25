@@ -15,24 +15,32 @@ int extend(int v, int len) {
   return v;
 }
 
-void mem_st_dw(char *mem, int addr, int *s) {
+void mem_st_dw(char *mem, int addr, int *s, option_t *opt) {
   int old;
   memcpy(&old, mem+addr, 4);
   memcpy(mem+addr, s, 4);
-  fprintf(stderr, "st: addr = %08X    value = %08X -> %08X\n", addr, old, *s);
+  if(opt->opt >> OPTION_M & 1) {
+    fprintf(stderr, "st: addr = %08X    value = %08X -> %08X\n", addr, old, *s);
+  }
 }
 
-void mem_ld_dw(char *mem, int addr, int *d) {
+void mem_ld_dw(char *mem, int addr, int *d, option_t *opt) {
   memcpy(d, mem+addr, 4);
-  fprintf(stderr, "ld: addr = %08X    value = %08X\n", addr, *d);
+  if(opt->opt >> OPTION_M & 1) {
+    fprintf(stderr, "ld: addr = %08X    value = %08X\n", addr, *d);
+  }
 }
 
 void inc_pc(state_t *st) {
   st->pc.i += 2;
 }
 
-void i_write(state_t *st, int n) {
-  printf("%02X\n", st->gpr[n].i & 0xFF);
+void i_write(state_t *st, int n, option_t *opt) {
+  if(opt->opt >> OPTION_W & 1) {
+    printf("WRITE from R%2d: %02X\n", n, st->gpr[n].i & 0xFF);
+  } else {
+    putchar(st->gpr[n].i & 0xFF);
+  }
   inc_pc(st);
 }
 
@@ -58,14 +66,14 @@ void i_mov(state_t *st, int m, int n) {
   inc_pc(st);
 }
 
-void i_mov_l_disp(state_t *st, int disp, int n) {
+void i_mov_l_disp(state_t *st, int disp, int n, option_t *opt) {
   int addr = disp*4 + (st->pc.i & 0xFFFFFFFC) + 4;
-  mem_ld_dw(st->mem, addr, &st->gpr[n].i);
+  mem_ld_dw(st->mem, addr, &st->gpr[n].i, opt);
   inc_pc(st);
 }
 
-void i_mov_l_st(state_t *st, int m, int n) {
-  mem_st_dw(st->mem, st->gpr[n].i, &st->gpr[m].i);
+void i_mov_l_st(state_t *st, int m, int n, option_t *opt) {
+  mem_st_dw(st->mem, st->gpr[n].i, &st->gpr[m].i, opt);
   inc_pc(st);
 }
 
@@ -74,8 +82,8 @@ void i_sts_pr(state_t *st, int n) {
   inc_pc(st);
 }
 
-void i_mov_l_ld(state_t *st, int m, int n) {
-  mem_ld_dw(st->mem, st->gpr[m].i, &st->gpr[n].i);
+void i_mov_l_ld(state_t *st, int m, int n, option_t *opt) {
+  mem_ld_dw(st->mem, st->gpr[m].i, &st->gpr[n].i, opt);
   inc_pc(st);
 }
 
@@ -156,23 +164,26 @@ void i_fmov(state_t *st, int m, int n) {
   inc_pc(st);
 }
 
-void i_fmov_s_ld(state_t *st, int m, int n) {
-  mem_ld_dw(st->mem, st->gpr[m].i, &st->fr[n].i);
+void i_fmov_s_ld(state_t *st, int m, int n, option_t *opt) {
+  mem_ld_dw(st->mem, st->gpr[m].i, &st->fr[n].i, opt);
   inc_pc(st);
 }
 
-void i_fmov_s_st(state_t *st, int m, int n) {
-  mem_st_dw(st->mem, st->gpr[n].i, &st->fr[m].i);
+void i_fmov_s_st(state_t *st, int m, int n, option_t *opt) {
+  mem_st_dw(st->mem, st->gpr[n].i, &st->fr[m].i, opt);
   inc_pc(st);
 }
 
-void i_fadd(state_t *st, int m, int n) {
-  /* st->fr[n].f += st->fr[m].f; */
-  st->fr[n].u = fadd(st->fr[n].u, st->fr[m].u);
+void i_fadd(state_t *st, int m, int n, option_t *opt) {
+  if(opt->opt >> OPTION_N & 1) {
+    st->fr[n].f += st->fr[m].f;
+  } else {
+    st->fr[n].u = fadd(st->fr[n].u, st->fr[m].u);
+  }
   inc_pc(st);
 }
 
-void i_fcmp_eq(state_t *st, int m, int n) {
+void i_fcmp_eq(state_t *st, int m, int n, option_t *opt) {
   if(st->fr[n].f == st->fr[m].f) {
     st->sr.i |= 1;
   } else {
@@ -181,7 +192,7 @@ void i_fcmp_eq(state_t *st, int m, int n) {
   inc_pc(st);
 }
 
-void i_fcmp_gt(state_t *st, int m, int n) {
+void i_fcmp_gt(state_t *st, int m, int n, option_t *opt) {
   if(st->fr[n].f > st->fr[m].f) {
     st->sr.i |= 1;
   } else {
@@ -190,31 +201,40 @@ void i_fcmp_gt(state_t *st, int m, int n) {
   inc_pc(st);
 }
 
-void i_fdiv(state_t *st, int m, int n) {
+void i_fdiv(state_t *st, int m, int n, option_t *opt) {
   st->fr[n].f /= st->fr[m].f;
   inc_pc(st);
 }
 
-void i_fmul(state_t *st, int m, int n) {
-  /* st->fr[n].f *= st->fr[m].f; */
-  st->fr[n].u = fmul(st->fr[n].u, st->fr[m].u);
+void i_fmul(state_t *st, int m, int n, option_t *opt) {
+  if(opt->opt >> OPTION_N & 1) {
+    st->fr[n].f *= st->fr[m].f;
+  } else {
+    st->fr[n].u = fmul(st->fr[n].u, st->fr[m].u);
+  }
   inc_pc(st);
 }
 
-void i_fneg(state_t *st, int n) {
-  /* st->fr[n].f = -st->fr[n].f; */
-  st->fr[n].u = fneg(st->fr[n].u);
+void i_fneg(state_t *st, int n, option_t *opt) {
+  if(opt->opt >> OPTION_N & 1) {
+    st->fr[n].f = -st->fr[n].f;
+  } else {
+    st->fr[n].u = fneg(st->fr[n].u);
+  }
   inc_pc(st);
 }
 
-void i_fsqrt(state_t *st, int n) {
+void i_fsqrt(state_t *st, int n, option_t *opt) {
   st->fr[n].f = sqrtf(st->fr[n].f);
   inc_pc(st);
 }
 
-void i_fsub(state_t *st, int m, int n) {
-  /* st->fr[n].f -= st->fr[m].f; */
-  st->fr[n].u = fsub(st->fr[n].u, st->fr[m].u);
+void i_fsub(state_t *st, int m, int n, option_t *opt) {
+  if(opt->opt >> OPTION_N & 1) {
+    st->fr[n].f -= st->fr[m].f;
+  } else {
+    st->fr[n].u = fsub(st->fr[n].u, st->fr[m].u);
+  }
   inc_pc(st);
 }
 
@@ -271,12 +291,12 @@ void i_fsts(state_t *st, int n) {
   inc_pc(st);
 }
 
-void i_ftrc(state_t *st, int m) {
+void i_ftrc(state_t *st, int m, option_t *opt) {
   st->fpul.i = (int)st->fr[m].f;
   inc_pc(st);
 }
 
-void i_float(state_t *st, int n) {
+void i_float(state_t *st, int n, option_t *opt) {
   st->fr[n].f = (float)st->fpul.i;
   inc_pc(st);
 }
@@ -285,10 +305,12 @@ void inst_error(int inst) {
   fprintf(stderr, "Unknown instruction: %04X\n", inst);
 }
 
-int exec_inst(state_t *st) {
+int exec_inst(state_t *st, option_t *opt) {
   int inst;
   memcpy(&inst, st->mem + st->pc.i, 2);
-  fprintf(stderr, "exec: %04X, pc: %08X\n", inst, st->pc.i);
+  if(opt->opt >> OPTION_D & 1) {
+    fprintf(stderr, "exec: %04X, pc: %08X\n", inst, st->pc.i);
+  }
   
   int opcode = inst >> 12;
   if(opcode == 0x7 || opcode == 0x8 || opcode == 0x9 || opcode == 0xE) { /* 4,4,8 form */
@@ -313,7 +335,7 @@ int exec_inst(state_t *st) {
       }
       break;
     case 0x9:                   /* MOV.L(PC relative) */
-      i_mov_l_disp(st, param[1], param[0]);
+      i_mov_l_disp(st, param[1], param[0], opt);
       break;
     case 0xE:                   /* MOV(imm) */
       i_mov_i(st, param[1], param[0]);
@@ -335,10 +357,10 @@ int exec_inst(state_t *st) {
     case 0x0:
       switch(param[2]) {
       case 0x0:                 /* WRITE */
-        i_write(st, param[0]);
+        i_write(st, param[0], opt);
         break;
       case 0x1:
-        i_read(st, param[0]);
+        i_read(st, param[0]);   /* READ */
         break;
       case 0xA:                 /* STS */
         switch(param[1]) {
@@ -364,7 +386,7 @@ int exec_inst(state_t *st) {
     case 0x2:
       switch(param[2]) {
       case 0x2:                 /* MOV.L(st) */
-        i_mov_l_st(st, param[1], param[0]);
+        i_mov_l_st(st, param[1], param[0], opt);
         break;
       case 0x9:                 /* AND */
         i_and(st, param[1], param[0]);
@@ -435,7 +457,7 @@ int exec_inst(state_t *st) {
     case 0x6:
       switch(param[2]) {
       case 0x2:                 /* MOV.L(ld) */
-        i_mov_l_ld(st, param[1], param[0]);
+        i_mov_l_ld(st, param[1], param[0], opt);
         break;
       case 0x3:                 /* MOV */
         i_mov(st, param[1], param[0]);
@@ -451,36 +473,36 @@ int exec_inst(state_t *st) {
     case 0xF:
       switch(param[2]) {
       case 0x0:                 /* FADD */
-        i_fadd(st, param[1], param[0]);
+        i_fadd(st, param[1], param[0], opt);
         break;
       case 0x1:                 /* FSUB */
-        i_fsub(st, param[1], param[0]);
+        i_fsub(st, param[1], param[0], opt);
         break;
       case 0x2:                 /* FMUL */
-        i_fmul(st, param[1], param[0]);
+        i_fmul(st, param[1], param[0], opt);
         break;
       case 0x3:                 /* FDIV */
-        i_fdiv(st, param[1], param[0]);
+        i_fdiv(st, param[1], param[0], opt);
         break;
       case 0x4:                 /* FCMP/EQ */
-        i_fcmp_eq(st, param[1], param[0]);
+        i_fcmp_eq(st, param[1], param[0], opt);
         break;
       case 0x5:                 /* FCMP/GT */
-        i_fcmp_gt(st, param[1], param[0]);
+        i_fcmp_gt(st, param[1], param[0], opt);
         break;
       case 0x8:                 /* FMOV.S(ld) */
-        i_fmov_s_ld(st, param[1], param[0]);
+        i_fmov_s_ld(st, param[1], param[0], opt);
         break;
       case 0xA:                 /* FMOV.S(st) */
-        i_fmov_s_st(st, param[1], param[0]);
+        i_fmov_s_st(st, param[1], param[0], opt);
         break;
       case 0xD:
         switch(param[1]) {
         case 0x4:               /* FNEG */
-          i_fneg(st, param[0]);
+          i_fneg(st, param[0], opt);
           break;
         case 0x6:               /* FSQRT */
-          i_fsqrt(st, param[0]);
+          i_fsqrt(st, param[0], opt);
           break;
         case 0x8:               /* FLDI0 */
           i_fldi0(st, param[0]);
@@ -506,11 +528,11 @@ int exec_inst(state_t *st) {
   return 0;
 }
 
-void run(state_t *st, int noi) {
+void run(state_t *st, int noi, option_t *opt) {
   while(st->pc.i != noi * 2) {
 #ifdef debug
     show_status(st);
 #endif
-    if(exec_inst(st) < 0) break;
+    if(exec_inst(st, opt) < 0) break;
   }
 }
