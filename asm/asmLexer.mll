@@ -8,7 +8,7 @@
 
 let space = ' ' | '\t'
 let digit = ['0'-'9']
-let hdigit = ['0'-'9' 'A'-'F']
+let hdigit = ['0'-'9' 'A'-'F' 'a'-'f']
 let num = '-'?digit+
 let hnum = "H'"hdigit+
 let alpha = ['a'-'z' 'A'-'Z' '_' '.']
