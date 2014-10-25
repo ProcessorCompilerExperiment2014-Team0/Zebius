@@ -2,9 +2,9 @@ TESTBENCH = tb_core
 OBJECTS =  sim_sram.o common.o component.o loader.o alu.o u232c_out.o sram_controller.o core.o tb_core.o
 GHDLC = ghdl
 GHDLFLAGS  = -fexplicit --ieee=synopsys
-GHDL_SIM_OPT = --stop-time=1us
+GHDL_SIM_OPT = --stop-time=300us
 
-.PHONY: clean $(TESTBENCH)
+.PHONY: clean $(TESTBENCH) $(OBJECTS)
 all: $(TESTBENCH)
 
 $(OBJECTS): %.o: %.vhd

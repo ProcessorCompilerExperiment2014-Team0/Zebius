@@ -35,7 +35,8 @@ package zebius_component_p is
   end record;
 
   component u232c_out
-    generic ( wtime: std_logic_vector(15 downto 0));
+    generic (
+      wtime : std_logic_vector(15 downto 0));
     port ( clk  : in  std_logic;
            data : in  std_logic_vector (7 downto 0);
            go   : in  std_logic;
@@ -52,12 +53,10 @@ package zebius_component_p is
     data : sram_data_t;
     addr : sram_addr_t;
     dir  : iodir_t;
-    go   : std_logic;
   end record;
 
   type sram_controller_out_t is record
     data : sram_data_t;
-    busy : std_logic;
   end record;
 
   component sram_controller is

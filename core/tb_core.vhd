@@ -74,26 +74,51 @@ begin
                
                din   => co.sram,
                dout  => ci.sram);
-  
-  sram : GS8160Z18
-    port map ( A => ZA,
-               CK => ZCLKMA(1),
-               XBA => XZBE(2),
-               XBB => XZBE(3),
-               XW => XWA,
-               XE1 => XE1,
-               E2 => E2A,
-               XE3 => XE3,
-               XG => XGA,
-               ADV => ADVA,
-               XCKE => XZCKE,
-               DQA => ZD(23 downto 16),
-               DQB => ZD(31 downto 24),
-               DQPA => ZDP(2),
-               DQPB => ZDP(3),
-               ZZ => ZZA,
-               XFT => XFT,
-               XLBO => XLBO); -- Linear Byte Order
+
+  sram_unit0 : GS8160Z18
+    generic map (
+      report_read => true,
+      report_write => true)
+    port map (
+      A => ZA,
+      CK => ZCLKMA(0),
+      XBA => XZBE(0),
+      XBB => XZBE(1),
+      XW => XWA,
+      XE1 => XE1,
+      E2 => E2A,
+      XE3 => XE3,
+      XG => XGA,
+      ADV => ADVA,
+      XCKE => XZCKE,
+      DQA => ZD(7 downto 0),
+      DQB => ZD(15 downto 8),
+      DQPA => ZDP(0),
+      DQPB => ZDP(1),
+      ZZ => ZZA,
+      XFT => XFT,
+      XLBO => XLBO);
+
+  sram_unit1 : GS8160Z18
+    port map (
+      A => ZA,
+      CK => ZCLKMA(1),
+      XBA => XZBE(2),
+      XBB => XZBE(3),
+      XW => XWA,
+      XE1 => XE1,
+      E2 => E2A,
+      XE3 => XE3,
+      XG => XGA,
+      ADV => ADVA,
+      XCKE => XZCKE,
+      DQA => ZD(23 downto 16),
+      DQB => ZD(31 downto 24),
+      DQPA => ZDP(2),
+      DQPB => ZDP(3),
+      ZZ => ZZA,
+      XFT => XFT,
+      XLBO => XLBO);
 
   clockgen: process
   begin
