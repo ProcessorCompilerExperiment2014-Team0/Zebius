@@ -1,7 +1,7 @@
 TESTBENCH = tb_core
-SOURCES =  alu.vhd core.vhd decode.vhd loader.vhd sim_sram.vhd sram_controller.vhd tb_core.vhd type.vhd util.vhd u232c_out.vhd
+SOURCES =  alu.vhd core_internal.vhd core.vhd loader.vhd sim_sram.vhd sram_controller.vhd tb_core.vhd type.vhd util.vhd u232c_out.vhd
 GHDLC = ghdl
-GHDLFLAGS  = --ieee=standard
+GHDLFLAGS  = -g --ieee=standard
 GHDL_SIM_OPT = --stop-time=300us
 
 .PHONY: clean $(TESTBENCH)

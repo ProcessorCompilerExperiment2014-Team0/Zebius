@@ -12,7 +12,7 @@ package zebius_util_p is
 
   function signed_integer(n : unsigned)
     return integer;
-  
+
   function signed_resize(n : unsigned;
                          size : natural)
     return unsigned;
@@ -24,7 +24,7 @@ package body zebius_util_p is
 
     function signed_integer(n : unsigned)
     return integer is
-    variable sn : signed(n'length-1 downto 0);    
+    variable sn : signed(n'length-1 downto 0);
   begin
     sn := signed(n);
     return to_integer(sn);
