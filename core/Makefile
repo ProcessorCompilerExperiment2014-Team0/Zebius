@@ -1,19 +1,19 @@
 TESTBENCH = tb_core
-OBJECTS =  sim_sram.o type.o util.o decode.o loader.o alu.o u232c_out.o sram_controller.o core.o tb_core.o
+SOURCES =  alu.vhd core.vhd decode.vhd loader.vhd sim_sram.vhd sram_controller.vhd tb_core.vhd type.vhd util.vhd u232c_out.vhd
 GHDLC = ghdl
-GHDLFLAGS  = -fexplicit --ieee=synopsys
+GHDLFLAGS  = --ieee=standard
 GHDL_SIM_OPT = --stop-time=300us
 
-.PHONY: clean $(TESTBENCH) $(OBJECTS)
+.PHONY: clean $(TESTBENCH)
 all: $(TESTBENCH)
 
-$(OBJECTS): %.o: %.vhd
-	$(GHDLC) -a $(GHDLFLAGS) $^
+work-obj93.cf:
+	$(GHDLC) -i $(GHDLFLAGS) $(SOURCES)
 
-$(TESTBENCH): $(OBJECTS)
-	$(GHDLC) -e $(GHDLFLAGS) $@
+$(TESTBENCH): work-obj93.cf
+	$(GHDLC) -m $(GHDLFLAGS) $@
 	$(GHDLC) -r $(GHDLFLAGS) $@ $(GHDL_SIM_OPT) --wave=$@.ghw
 
 clean :
 	$(GHDLC) --clean
-	rm *.vcd work-obj93.cf
+	rm *.ghw work-obj93.cf
