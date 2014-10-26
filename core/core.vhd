@@ -89,6 +89,7 @@ begin
       case v.state is
         when CORE_INIT =>
           v.state := next_state(v.state, v.mode);
+          v.mode := MODE_FETCH_INST;
 
         when CORE_WAIT =>
           if v.wtime /= 0 then
@@ -98,18 +99,21 @@ begin
           end if;
 
         when CORE_FETCH_INST =>
-          inst_idx := to_integer(shift_right(v.reg_file(0), 1));
-          v.inst := array_inst(inst_idx);
+          co.sram.addr <= v.reg_file(0)(21 downto 0);
+          co.sram.dir <= DIR_READ;
 
-          v.state := CORE_DECODE_INST;
+          v.wtime := 1;
+          v.state := next_state(v.state, v.mode);
 
         when CORE_DECODE_INST =>
+          v.inst := zebius_inst(ci.sram.data(15 downto 0));
+
           decode_inst(v.inst, v, co.alu, co.sram, co.sout);
 
           v.state := next_state(v.state, v.mode);
 
         when CORE_ACCESS_MEMORY =>
-          co.sram.addr <= ci.alu.o(19 downto 0);
+          co.sram.addr <= ci.alu.o(21 downto 0);
           co.sram.data <= v.mem_data;
           co.sram.dir <= v.mem_dir;
 
@@ -162,7 +166,7 @@ begin
           end case;
 
           v.state := next_state(v.state, v.mode);
-          v.mode := MODE_NOP;
+          v.mode := MODE_FETCH_INST;
 
       end case;
 

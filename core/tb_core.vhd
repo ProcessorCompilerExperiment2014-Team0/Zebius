@@ -81,7 +81,7 @@ begin
       xft   => xft,
       xlbo  => xlbo,
       zza   => zza,
-      
+
       din   => co.sram,
       dout  => ci.sram);
 

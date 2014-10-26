@@ -38,6 +38,7 @@ package zebius_core_internal_p is
   type inst_mode_t is (
     MODE_NOP,
 
+    MODE_FETCH_INST,
     MODE_ARITH,
     MODE_OUTPUT,
     MODE_MOV_REG,
@@ -111,6 +112,14 @@ package body zebius_core_internal_p is
         case mode is
           when MODE_NOP =>
             return CORE_UPDATE_PC;
+
+          when MODE_FETCH_INST =>
+            case state is
+              when CORE_FETCH_INST => return CORE_WAIT;
+              when CORE_WAIT => return CORE_DECODE_INST;
+              when others =>
+                assert false report "invalid core state" severity ERROR;
+            end case;
 
           when MODE_ARITH =>
             case state is
@@ -251,7 +260,7 @@ package body zebius_core_internal_p is
 
       v.mode := MODE_STORE;
 
-      mem.addr <= v.reg_file(n+16)(19 downto 0);
+      mem.addr <= v.reg_file(n+16)(21 downto 0);
       mem.data <= "0000" & v.reg_file(m+16);
       mem.dir <= DIR_WRITE;
 
@@ -265,7 +274,7 @@ package body zebius_core_internal_p is
       v.wr_src := WR_MEMORY;
       v.wr_idx := n+16;
 
-      mem.addr <= v.reg_file(m+16)(19 downto 0);
+      mem.addr <= v.reg_file(m+16)(21 downto 0);
       mem.dir <= DIR_READ;
 
     elsif inst.a = "0000" and inst.c = "0010" and inst.d = "1010" then
