@@ -1,6 +1,7 @@
 open AsmSyntax
 open Printf
 
+exception Duplicative_label of string list * int * mnemonic * arg list
 exception Unknown_instruction of string list * int * mnemonic * arg list
 exception Immd_out_of_bounds of string list * int * mnemonic * arg list
 
@@ -91,7 +92,10 @@ let check_immd len sign = function
 let rec align tbl n = function
   | [] -> []
   | (lbl,m,args)::is ->
-    List.iter (fun l -> Hashtbl.add tbl l n) lbl;
+    List.iter
+      (fun l -> if Hashtbl.mem tbl l
+        then raise (Duplicative_label ([l],n,m,args))
+        else Hashtbl.add tbl l n) lbl;
     match m with
     | M_ALIGN ->
       if (n land 1) = 0 then align tbl n is

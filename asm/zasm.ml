@@ -19,11 +19,13 @@ let main () =
       let ofile = String.sub Sys.argv.(1) 0 (String.length Sys.argv.(1) - 2) in
       let output = open_out_bin ofile in
       let tbl = Hashtbl.create (List.length asm) in
-      let asm' = align tbl 0 asm in
       try
+        let asm' = align tbl 0 asm in
         write output tbl asm';
         List.iter (show stdout tbl) asm'
       with
+        | Duplicative_label (l,p,m,a) -> print_endline "Duplicative label:";
+          show_error stdout tbl (l,p,m,a)
         | Unknown_instruction (l,p,m,a) -> print_endline "Unknown instruction:";
           show_error stdout tbl (l,p,m,a)
         | Immd_out_of_bounds (l,p,m,a) -> print_endline "Immediate out of bounds:";
