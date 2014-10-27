@@ -158,8 +158,8 @@ let encode tbl (lbl,place,mn,args) =
                                enc_int3 0x8 0x9 (check_signed 8 d)
       | (M_BT, [A_Immd d]) -> enc_int3 0x8 0x9 (check_immd 8 true d)
       | (M_BRA, [A_Label l]) -> let d = get_disp tbl place l in
-                                enc_int2 0xA (check_signed 8 d)
-      | (M_BRA, [A_Immd d]) -> enc_int2 0xA (check_immd 8 true d)
+                                enc_int2 0xA (check_signed 12 d)
+      | (M_BRA, [A_Immd d]) -> enc_int2 0xA (check_immd 12 true d)
       | (M_JMP, [A_At_R n]) -> enc_int3 0x4 n 0x2B
       | (M_JSR, [A_At_R n]) -> enc_int3 0x4 n 0x0B
       | (M_RTS, []) -> enc_int1 0x000B
@@ -209,6 +209,20 @@ let show ot tbl (lbl,place,mn,args) =
           (string_of_label lbl)
     | _ ->
         fprintf ot "%08X:     %04X = %s %s%s\n" (place*2)
+          (enc1 (encode tbl (lbl,place,mn,args)))
+          (string_of_mn mn) (string_of_args tbl args)
+          (string_of_label lbl)
+
+let show_vhdl ot tbl (lbl,place,mn,args) =
+  match mn with
+    | M_DATA_L ->
+      let c = enc1 (encode tbl (lbl,place,mn,args)) in
+      fprintf ot "      zebius_inst(x\"%04X\"), -- = %s %s%s\n" (c land 0xFFFF)
+        (string_of_mn mn) (string_of_args tbl args) (string_of_label lbl);
+      fprintf ot "      zebius_inst(x\"%04X\"),\n"
+        ((c lsr 16) land 0xFFFF)
+    | _ ->
+        fprintf ot "      zebius_inst(x\"%04X\"), -- = %s %s%s\n"
           (enc1 (encode tbl (lbl,place,mn,args)))
           (string_of_mn mn) (string_of_args tbl args)
           (string_of_label lbl)
