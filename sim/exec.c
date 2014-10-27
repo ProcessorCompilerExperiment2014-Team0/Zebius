@@ -142,9 +142,11 @@ void i_xor(state_t *st, int m, int n) {
 
 void i_shld(state_t *st, int m, int n) {
   if(st->gpr[m].i >= 0) {
-    st->gpr[n].i <<= st->gpr[m].i;
+    st->gpr[n].i <<= st->gpr[m].i & 0x1F;
+  } else if((st->gpr[m].i & 0x1F) == 0) {
+    st->gpr[n].i = 0;
   } else {
-    st->gpr[n].i >>= -st->gpr[m].i;
+    st->gpr[n].i >>= ((~st->gpr[m].i & 0x1F) + 1);
   }
   inc_pc(st);
 }
