@@ -5,8 +5,11 @@ library unisim;
 use unisim.vcomponents.all;
 
 library work;
-use work.zebius_p.all;
-use work.zebius_component_p.all;
+use work.zebius_alu_p.all;
+use work.zebius_core_p.all;
+use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_out_p.all;
+
 
 entity cpu is
     port ( mclk1 : in  std_logic;
@@ -30,6 +33,7 @@ entity cpu is
            xlbo  : out std_logic;
            zza   : out std_logic);
 end cpu;
+
 
 architecture behavior of cpu is
 
