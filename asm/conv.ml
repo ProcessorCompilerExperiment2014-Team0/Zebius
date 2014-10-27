@@ -1,6 +1,7 @@
 open AsmSyntax
 open Printf
 
+exception Unbound_label of string list * int * mnemonic * arg list
 exception Duplicative_label of string list * int * mnemonic * arg list
 exception Unknown_instruction of string list * int * mnemonic * arg list
 exception Immd_out_of_bounds of string list * int * mnemonic * arg list
@@ -192,6 +193,7 @@ let encode tbl (lbl,place,mn,args) =
       | _ -> raise (Unknown_instruction (lbl,place,mn,args)))
   with
     | Failure s -> raise (Immd_out_of_bounds (lbl,place,mn,args))
+    | Not_found -> raise (Unbound_label (lbl,place,mn,args))
     | e -> raise e
 
 let rec enc1 = function

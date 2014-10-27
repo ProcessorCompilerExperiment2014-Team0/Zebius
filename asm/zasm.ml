@@ -24,6 +24,8 @@ let main () =
         write output tbl asm';
         List.iter (show stdout tbl) asm'
       with
+        | Unbound_label (l,p,m,a) -> print_endline "Unbound label:";
+          show_error stdout tbl (l,p,m,a)
         | Duplicative_label (l,p,m,a) -> print_endline "Duplicative label:";
           show_error stdout tbl (l,p,m,a)
         | Unknown_instruction (l,p,m,a) -> print_endline "Unknown instruction:";
