@@ -500,6 +500,18 @@ int exec_inst(state_t *st, option_t *opt) {
         break;
       case 0xD:
         switch(param[1]) {
+        case 0x0:               /* FSTS */
+          i_fsts(st, param[0]);
+          break;
+        case 0x1:               /* FLDS */
+          i_flds(st, param[0]);
+          break;
+        case 0x2:               /* FLOAT */
+          i_float(st, param[0], opt);
+          break;
+        case 0x3:               /* FTRC */
+          i_ftrc(st, param[0], opt);
+          break;
         case 0x4:               /* FNEG */
           i_fneg(st, param[0], opt);
           break;

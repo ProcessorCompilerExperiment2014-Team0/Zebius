@@ -23,7 +23,8 @@ let main () =
         let asm' = align tbl 0 asm in
         write output tbl asm';
         if Array.length Sys.argv > 2 && Sys.argv.(2) = "-v"
-        then List.iter (show_vhdl stdout tbl) asm'
+        (* then List.iter (show_vhdl stdout tbl) asm' *)
+        then show_vhdl stdout tbl 0 asm'
         else List.iter (show stdout tbl) asm'
       with
         | Unbound_label (l,p,m,a) -> print_endline "Unbound label:";

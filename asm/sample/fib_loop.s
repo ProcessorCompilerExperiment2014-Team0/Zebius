@@ -1,4 +1,4 @@
-        MOV #10,R0
+.start  MOV #10,R0
         MOV #0,R1
         MOV #1,R2
         MOV #1,R3
@@ -7,4 +7,6 @@
         ADD R4,R3
         ADD #-1,R0
         CMP/EQ R0,R1
+	WRITE R2
         BF .loop
+        BRA .start
