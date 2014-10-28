@@ -11,6 +11,7 @@
 #define OPTION_M 1
 #define OPTION_W 2
 #define OPTION_N 3
+#define OPTION_R 4
 
 typedef union {
   float f;
@@ -44,5 +45,6 @@ typedef struct {
 } option_t;
 
 void show_status(state_t *st);
+void show_status_honly(state_t *st);
 
 #endif
