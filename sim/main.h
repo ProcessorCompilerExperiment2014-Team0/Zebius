@@ -42,9 +42,11 @@ typedef struct {
   int opt;
   test_t gpr[NUM_OF_GPR];
   test_t fr[NUM_OF_FR];
+  long long i_count;
+  long long i_limit;
 } option_t;
 
-void show_status(state_t *st);
+void show_status(state_t *st, option_t *opt);
 void show_status_honly(state_t *st);
 
 #endif
