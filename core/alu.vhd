@@ -103,7 +103,7 @@ architecture behavior of zebius_alu is
 
   function alu_gt ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin
-    if a > b then
+    if signed(a) > signed(b) then
       return to_unsigned(1, 32);
     else
       return to_unsigned(0, 32);
