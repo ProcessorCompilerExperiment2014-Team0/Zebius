@@ -20,7 +20,7 @@ package zebius_alu_p is
   constant ALU_INST_EQ : alu_inst_t := "1001";
   constant ALU_INST_GT : alu_inst_t := "1010";
   constant ALU_INST_INC_PC : alu_inst_t := "1011";
-  constant ALU_INST_DISP_L : alu_inst_t := "1100";
+  constant ALU_INST_DISP_PC_L : alu_inst_t := "1100";
 
 
   type alu_in_t is record
@@ -119,9 +119,9 @@ architecture behavior of zebius_alu is
     return unsigned(signed(a+4)+signed(disp(11 downto 0))*2);
   end;
 
-  function alu_disp_l ( a: reg_data_t; disp: reg_data_t) return reg_data_t is
+  function alu_disp_pc_l ( a: reg_data_t; disp: reg_data_t) return reg_data_t is
   begin
-    return unsigned(signed(a)+signed(disp(11 downto 0))*4);
+    return unsigned(signed(a and x"fffffffc")+signed(disp(11 downto 0))*4+4);
   end;
 
 
@@ -140,7 +140,7 @@ begin
       when ALU_INST_EQ   => dout.o <= alu_eq(din.i1, din.i2);
       when ALU_INST_GT   => dout.o <= alu_gt(din.i1, din.i2);
       when ALU_INST_INC_PC => dout.o <= alu_inc_pc(din.i1, din.i2);
-      when ALU_INST_DISP_L => dout.o <= alu_disp_l(din.i1, din.i2);
+      when ALU_INST_DISP_PC_L => dout.o <= alu_disp_pc_l(din.i1, din.i2);
       when others        => dout.o <= alu_nop(din.i1, din.i2);
     end case;
   end process;

@@ -239,8 +239,8 @@ package body zebius_core_internal_p is
       v.wr_idx := n+16;
       v.wr_src := WR_MEMORY;
 
-      alu.inst <= ALU_INST_DISP_l;
-      alu.i1 <= v.reg_file(n+16)+4;
+      alu.inst <= ALU_INST_DISP_PC_L;
+      alu.i1 <= v.reg_file(0);
       alu.i2 <= d;
 
       v.mem_dir := DIR_READ;
