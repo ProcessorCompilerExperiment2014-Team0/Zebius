@@ -291,7 +291,7 @@ package body zebius_core_internal_p is
       n := to_integer(inst.b);
 
       v.mode := MODE_MOV_REG;
-      v.reg_file(n+16) := v.reg_file(0);
+      v.reg_file(n+16) := v.reg_file(1);
 
     elsif inst.a = "0011" and inst.d = "1100" then
       -- add Rm Rn
