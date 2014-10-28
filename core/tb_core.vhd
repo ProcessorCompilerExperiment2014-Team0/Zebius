@@ -41,6 +41,8 @@ architecture testbench of tb_core is
 begin
 
   core : zebius_core
+    generic map (
+      enable_log => true)
     port map (
       clk => clk,
       ci  => ci,
@@ -87,8 +89,8 @@ begin
 
   sram_unit0 : GS8160Z18
     generic map (
-      report_read => true,
-      report_write => true)
+      report_read => false,
+      report_write => false)
     port map (
       a => za,
       ck => zclkma(0),

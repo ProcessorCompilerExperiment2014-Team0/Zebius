@@ -23,6 +23,8 @@ package zebius_core_p is
   end record;
 
   component zebius_core
+    generic (
+      enable_log : boolean := false);
     port (
       clk : in  std_logic;
       ci  : in  core_in_t;
@@ -33,9 +35,13 @@ end package;
 
 
 
+library std;
+use std.textio.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_textio.all;
 
 library work;
 use work.zebius_alu_p.all;
@@ -50,6 +56,8 @@ use work.zebius_util_p.all;
 
 
 entity zebius_core is
+  generic (
+    enable_log : boolean);
   port (
     clk : in  std_logic;
     ci   : in  core_in_t;
@@ -73,11 +81,15 @@ architecture behavior of zebius_core is
     nextpc => PC_SEQ,
     jmp_idx => 0);
 
+  file log : text is out "core.log";
+
 begin
 
   cycle: process(clk)
     variable v : ratch_t;
     variable inst_idx : integer range 0 to array_bound;
+    variable i : integer range 0 to 15;
+    variable l : line;
   begin
     if rising_edge(clk) then
       v := r;
@@ -106,7 +118,53 @@ begin
           v.state := next_state(v.state, v.mode);
 
         when CORE_DECODE_INST =>
+
+          if enable_log then
+            write(l, string'("PC   : "));
+            hwrite(l, std_logic_vector(v.reg_file(0)));
+            writeline(log, l);
+
+            write(l, string'("PR   : "));
+            hwrite(l, std_logic_vector(v.reg_file(1)));
+            writeline(log, l);
+
+            write(l, string'("T    : "));
+            write(l, v.reg_file(3)(0));
+            writeline(log, l);
+
+            for i in 0 to 15 loop
+              write(l, string'("R"));
+              write(l, i, RIGHT, 4);
+              write(l, string'(": "));
+              hwrite(l, std_logic_vector(v.reg_file(i+16)));
+              writeline(log, l);
+            end loop;
+
+            for i in 0 to 15 loop
+              write(l, string'("FR"));
+              write(l, i, RIGHT, 3);
+              write(l, string'(": "));
+              hwrite(l, std_logic_vector(v.reg_file(i+32)));
+              writeline(log, l);
+            end loop;
+
+            write(l, string'("FPUL : "));
+            hwrite(l, std_logic_vector(v.reg_file(4)));
+            writeline(log, l);
+
+
+            writeline(log, l);
+          end if;
+
           v.inst := zebius_inst(ci.sram.data(15 downto 0));
+
+          if enable_log then
+            write(l, string'("exec: "));
+            hwrite(l, std_logic_vector(unsigned'(v.inst.a & v.inst.b & v.inst.c & v.inst.d)));
+            write(l, string'(", pc: "));
+            hwrite(l, std_logic_vector(v.reg_file(0)));
+            writeline(log, l);
+          end if;
 
           decode_inst(v.inst, v, co.alu, co.sram, co.sout);
 

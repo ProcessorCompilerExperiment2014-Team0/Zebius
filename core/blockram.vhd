@@ -42,7 +42,7 @@ end blockram;
 architecture syn of blockram is
   type ram_type is array (255 downto 0) of unsigned(31 downto 0);
   signal RAM: ram_type := (
-   0 => x"EE0FEF01", -- MOV     #1, R15 : MOV     #15, R14
+    0 => x"EE0FEF01", -- MOV     #1, R15    ;; .start : MOV     #15, R14
     1 => x"E00C4FED", -- SHLD    R14, R15 : MOV     #12, R0
     2 => x"4E0B9E02", -- MOV.L   .call_addr.24, R14 : JSR     @R14
     3 => x"A0032009", -- AND     R0, R0 : BRA     .call_endp.25
@@ -79,7 +79,8 @@ architecture syn of blockram is
     34 => x"000B2009", -- AND     R0, R0 : RTS         ;; min_caml_print_int
     35 => x"20092009", -- AND     R0, R0 : AND     R0, R0
     36 => x"00010000", -- .data.l #65536    ;; min_caml_hp
-    37 => x"00002009", -- AND     R0, R0    ;; .end
+    37 => x"00002009", -- AND     R0, R0    ;; .end : WRITE   R0
+    38 => x"0000AFB2", -- BRA     .start
     others => x"00000000");
 begin
 

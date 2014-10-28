@@ -260,6 +260,10 @@ package body zebius_core_internal_p is
 
       v.mode := MODE_STORE;
 
+      assert v.reg_file(n+16)(1 downto 0) = "00"
+        report "memory access to unaligned address"
+        severity warning;
+
       mem.addr <= v.reg_file(n+16)(21 downto 0);
       mem.data <= "0000" & v.reg_file(m+16);
       mem.dir <= DIR_WRITE;
@@ -268,6 +272,11 @@ package body zebius_core_internal_p is
       -- mov.l @Rm Rn
       n := to_integer(inst.b);
       m := to_integer(inst.c);
+
+      assert v.reg_file(m+16)(1 downto 0) = "00"
+        report "memory access to unaligned address"
+        severity warning;
+
 
       v.mode := MODE_LOAD;
       v.wtime := 1;
