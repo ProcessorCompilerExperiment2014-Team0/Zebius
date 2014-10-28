@@ -89,8 +89,8 @@ architecture implementation of sram_controller is
   signal bin : blockram_in_t := (
     en => '1',
     we => '0',
-    addr => (others => '1'),
-    data => (others => '1'));
+    addr => (others => '-'),
+    data => (others => '-'));
   signal bout : blockram_out_t;
 
   type ratch_t is record
@@ -168,7 +168,7 @@ begin
     if v.be1 then
       v.bdata1 := bout.data;
     else
-      v.bdata1 := (others => '1');
+      v.bdata1 := (others => '-');
     end if;
 
     if v.be2 then
@@ -176,7 +176,7 @@ begin
     elsif v.dir2 = DIR_READ then
       data := unsigned(zdp & zd);
     else
-      data := (others => '1');
+      data := (others => '-');
     end if;
 
     if v.word_align2 then
@@ -197,7 +197,7 @@ begin
 
       v.be0 := false;
       v.dir0 := DIR_READ;
-      v.data0 := (others => '1');
+      v.data0 := (others => '-');
       v.word_align0 := false;
 
       v.word_align1 := rin.word_align0;
