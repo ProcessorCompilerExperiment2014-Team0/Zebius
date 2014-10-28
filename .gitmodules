@@ -1,3 +1,4 @@
 [submodule "sim/fpu"]
 	path = sim/fpu
-	url = git@github.com:ProcessorCompilerExperiment2014-Team0/FPU.git
+	url = https://github.com/ProcessorCompilerExperiment2014-Team0/FPU
+
