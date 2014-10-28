@@ -402,8 +402,8 @@ package body zebius_core_internal_p is
       v.wr_idx := n+16;
 
       alu.inst <= ALU_INST_SHLD;
-      alu.i1 <= v.reg_file(n+16);
-      alu.i2 <= v.reg_file(m+16);
+      alu.i1 <= v.reg_file(m+16);
+      alu.i2 <= v.reg_file(n+16);
 
     elsif inst.a = "1000" and inst.b = "1011" then
       -- BF label
@@ -463,6 +463,8 @@ package body zebius_core_internal_p is
       v.nextpc := PC_JMP;
       v.jmp_idx := 1;
 
+    else
+      assert false report "invalid instruction" severity FAILURE;
     end if;
 
   end procedure;
