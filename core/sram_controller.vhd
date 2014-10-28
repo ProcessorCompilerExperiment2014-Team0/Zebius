@@ -86,37 +86,42 @@ end sram_controller;
 
 architecture implementation of sram_controller is
 
-  signal data1, data2 : sram_data_t;
-  signal dir1 : iodir_t := DIR_READ;
-  signal dir2 : iodir_t := DIR_READ;
+  signal bin : blockram_in_t := (
+    en => '1',
+    we => '0',
+    addr => (others => '1'),
+    data => (others => '1'));
+  signal bout : blockram_out_t;
 
-  signal bwe : std_logic := '0';
-  signal ben : std_logic;
-  signal baddr : unsigned(7 downto 0) := (others => '0');
-  signal bdi : unsigned(31 downto 0) := (others => '0');
-  signal bdo : unsigned(31 downto 0);
+  type ratch_t is record
+    -- common
+    word_align0, word_align1, word_align2 : boolean;
+    -- sram
+    data0, data1, data2 : sram_data_t;
+    dir0, dir1, dir2 : iodir_t;
+    -- blockram
+    be0, be1, be2 : boolean;
+    bdata1, bdata2 : unsigned(31 downto 0);
+  end record;
 
-  signal word_align1 : std_logic;
-  signal word_align2 : std_logic;
+  signal r, rin : ratch_t;
 
-  signal bdata2 : unsigned(31 downto 0);
-  signal bbram1, bbram2 : std_logic := '0';
+
+  function is_blockram_addr (addr : sram_addr_t)
+    return boolean is
+  begin
+    return to_integer(shift_right(addr, 4)) = 0;
+  end function;
 
 begin
 
   bram1 : blockram port map (
     clk => clk,
-    we => bwe,
-    en => ben,
-    addr => baddr,
-    di => bdi,
-    do => bdo);
+    din => bin,
+    dout => bout);
 
-  ben <= '1';
-  bwe <= '1' when to_integer(din.addr(21 downto 8)) = 0 and din.dir = DIR_WRITE else
-         '0';
-  baddr <= din.addr(9 downto 2);
-  bdi <= din.data(31 downto 0);
+  bin.en <= '1';
+  bin.we <= '0';
 
   xe1   <= '0';
   e2a   <= '1';
@@ -130,35 +135,84 @@ begin
   xft   <= '1';
   zza   <= '0';
   xlbo  <= '1';
-  xwa   <= '0' when din.dir = DIR_WRITE else
-           '1';
-  za    <= std_logic_vector(din.addr(21 downto 2));
-  zdp   <= std_logic_vector(data2(35 downto 32)) when dir2 = DIR_WRITE else
-           (others => 'Z');
-  zd    <= std_logic_vector(data2(31 downto 0)) when dir2 = DIR_WRITE else
-           (others => 'Z');
-  dout.data <= x"0" & bdata2 when bbram2 = '1' and word_align2 = '0' else
-               x"00000" & bdata2(31 downto 16) when bbram2 = '1' and word_align2 = '1' else
-               unsigned(zdp & zd) when bbram2 = '0' and word_align2 = '0' else
-               x"00000" & unsigned(zd(31 downto 16));
+
+  process (din)
+    variable v : ratch_t := r;
+  begin
+    
+    v.word_align0 := din.addr(1) = '1';
+
+    if is_blockram_addr(din.addr) then
+      assert din.dir = DIR_READ report "blockram is read-only" severity WARNING;
+      v.be0 := true;
+      bin.addr <= din.addr(9 downto 2);
+    else
+      v.be0 := false;
+      za <= std_logic_vector(din.addr(21 downto 2));
+
+      if din.dir = DIR_READ then
+        xwa <= '1';
+      else
+        xwa <= '0';
+      end if;
+      
+      v.dir0 := din.dir;
+      v.data0 := din.data;
+
+      rin <= v;
+    end if;
+  end process;
 
   process (clk)
+    variable v : ratch_t := rin;
+    variable data : sram_data_t;
   begin
     if rising_edge(clk) then
-      word_align1 <= din.addr(1);
-      word_align2 <= word_align1;
-      data1 <= din.data;
-      data2 <= data1;
-      dir1  <= din.dir;
-      dir2  <= dir1;
+      v.be0 := false;
+      v.dir0 := DIR_READ;
+      v.data0 := (others => '1');
+      v.word_align0 := false;
 
-      if to_integer(din.addr(21 downto 8)) = 0 then
-        bbram1 <= '1';
+      v.word_align1 := rin.word_align0;
+      v.word_align2 := rin.word_align1;
+
+      
+      -- blockram
+      v.be1 := rin.be0;
+      v.be2 := rin.be1;
+      
+      v.bdata2 := rin.bdata1;
+      if v.be1 then
+        v.bdata1 := bout.data;
       else
-        bbram1 <= '0';
+        v.bdata1 := (others => '1');
       end if;
-      bbram2 <= bbram1;
-      bdata2 <= bdi;
+
+      -- sram
+      v.data1 := rin.data0;
+      v.data2 := rin.data1;
+      v.dir1 := rin.dir0;
+      v.dir2 := rin.dir1;
+
+      if v.be2 then
+        data := "0000" & v.bdata2;
+      elsif v.dir2 = DIR_READ then
+        zdp <= (others => 'Z');
+        zd  <= (others => 'Z');
+        data := unsigned(zdp & zd);
+      else
+        zdp <= std_logic_vector(v.data2(35 downto 32));
+        zd <= std_logic_Vector(v.data2(31 downto 0));
+        data := (others => '1');
+      end if;
+
+      if v.word_align2 then
+        data := resize(data(31 downto 16), 32);
+      end if;
+
+      dout.data <= data;
+      
+      r <= v;
     end if;
   end process;
 

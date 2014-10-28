@@ -4,14 +4,22 @@ use ieee.numeric_std.all;
 
 package blockram_p is
 
+  type blockram_in_t is record
+    we : std_logic;
+    en : std_logic;
+    addr : unsigned(7 downto 0);
+    data : unsigned(31 downto 0);
+  end record;
+
+  type blockram_out_t is record
+    data : unsigned(31 downto 0);
+  end record;
+  
   component blockram is
     port (
       clk : in std_logic;
-      we : in std_logic;
-      en : in std_logic;
-      addr : in unsigned(7 downto 0);
-      di : in unsigned(31 downto 0);
-      do : out unsigned(31 downto 0));
+      din : in blockram_in_t;
+      dout : out blockram_out_t);
   end component;
 
 end blockram_p;
@@ -20,14 +28,14 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.blockram_p.all;
+
 entity blockram is
   port (
     clk : in std_logic;
-    we : in std_logic;
-    en : in std_logic;
-    addr : in unsigned(7 downto 0);
-    di : in unsigned(31 downto 0);
-    do : out unsigned(31 downto 0));
+    din : in blockram_in_t;
+    dout : out blockram_out_t);
 end blockram;
 
 
@@ -46,11 +54,11 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if en = '1' then
-        if we = '1' then
-          RAM(to_integer(addr)) <= di;
+      if din.en = '1' then
+        if din.we = '1' then
+          RAM(to_integer(din.addr)) <= din.data;
         end if;
-        do <= RAM(to_integer(addr));
+        dout.data <= RAM(to_integer(din.addr));
       end if;
     end if;
   end process;
