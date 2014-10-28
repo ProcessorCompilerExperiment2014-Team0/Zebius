@@ -213,19 +213,42 @@ let show ot tbl (lbl,place,mn,args) =
           (string_of_mn mn) (string_of_args tbl args)
           (string_of_label lbl)
 
-let show_vhdl ot tbl (lbl,place,mn,args) =
-  match mn with
-    | M_DATA_L ->
-      let c = enc1 (encode tbl (lbl,place,mn,args)) in
-      fprintf ot "      zebius_inst(x\"%04X\"), -- = %s %s%s\n" (c land 0xFFFF)
-        (string_of_mn mn) (string_of_args tbl args) (string_of_label lbl);
-      fprintf ot "      zebius_inst(x\"%04X\"),\n"
-        ((c lsr 16) land 0xFFFF)
-    | _ ->
-        fprintf ot "      zebius_inst(x\"%04X\"), -- = %s %s%s\n"
+(* let show_vhdl ot tbl (lbl,place,mn,args) = *)
+(*   match mn with *)
+(*     | M_DATA_L -> *)
+(*       let c = enc1 (encode tbl (lbl,place,mn,args)) in *)
+(*       fprintf ot "      zebius_inst(x\"%04X\"), -- = %s %s%s\n" (c land 0xFFFF) *)
+(*         (string_of_mn mn) (string_of_args tbl args) (string_of_label lbl); *)
+(*       fprintf ot "      zebius_inst(x\"%04X\"),\n" *)
+(*         ((c lsr 16) land 0xFFFF) *)
+(*     | _ -> *)
+(*         fprintf ot "      zebius_inst(x\"%04X\"), -- = %s %s%s\n" *)
+(*           (enc1 (encode tbl (lbl,place,mn,args))) *)
+(*           (string_of_mn mn) (string_of_args tbl args) *)
+(*           (string_of_label lbl) *)
+
+let rec show_vhdl ot tbl n = function
+  | [] -> ()
+  | (lbl,place,mn,args)::is ->
+    (match mn with
+      | M_DATA_L ->
+        fprintf ot "    %d => \"%08X\", -- %s %s%s\n" n
           (enc1 (encode tbl (lbl,place,mn,args)))
-          (string_of_mn mn) (string_of_args tbl args)
-          (string_of_label lbl)
+          (string_of_mn mn) (string_of_args tbl args) (string_of_label lbl);
+        show_vhdl ot tbl (n+1) is
+      | _ -> show_vhdl_go ot tbl n (lbl,place,mn,args) is)
+
+and show_vhdl_go ot tbl n (l1,p1,m1,a1) = function
+  | [] ->
+    fprintf ot "    %d => \"%04X%04X\", -- %s %s%s\n" n
+      0 (enc1 (encode tbl (l1,p1,m1,a1)))
+      (string_of_mn m1) (string_of_args tbl a1) (string_of_label l1)
+  | (l2,p2,m2,a2)::is ->
+    fprintf ot "    %d => \"%04X%04X\", -- %s %s%s : %s %s%s\n" n
+      (enc1 (encode tbl (l2,p2,m2,a2))) (enc1 (encode tbl (l1,p1,m1,a1)))
+      (string_of_mn m1) (string_of_args tbl a1) (string_of_label l1)
+      (string_of_mn m2) (string_of_args tbl a2) (string_of_label l2);
+    show_vhdl ot tbl (n+1) is
 
 let show_error ot tbl (lbl,place,mn,args) =
   match mn with
