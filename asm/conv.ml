@@ -232,7 +232,7 @@ let rec show_vhdl ot tbl n = function
   | (lbl,place,mn,args)::is ->
     (match mn with
       | M_DATA_L ->
-        fprintf ot "    %d => \"%08X\", -- %s %s%s\n" n
+        fprintf ot "    %d => x\"%08X\", -- %s %s%s\n" n
           (enc1 (encode tbl (lbl,place,mn,args)))
           (string_of_mn mn) (string_of_args tbl args) (string_of_label lbl);
         show_vhdl ot tbl (n+1) is
@@ -240,11 +240,11 @@ let rec show_vhdl ot tbl n = function
 
 and show_vhdl_go ot tbl n (l1,p1,m1,a1) = function
   | [] ->
-    fprintf ot "    %d => \"%04X%04X\", -- %s %s%s\n" n
+    fprintf ot "    %d => x\"%04X%04X\", -- %s %s%s\n" n
       0 (enc1 (encode tbl (l1,p1,m1,a1)))
       (string_of_mn m1) (string_of_args tbl a1) (string_of_label l1)
   | (l2,p2,m2,a2)::is ->
-    fprintf ot "    %d => \"%04X%04X\", -- %s %s%s : %s %s%s\n" n
+    fprintf ot "    %d => x\"%04X%04X\", -- %s %s%s : %s %s%s\n" n
       (enc1 (encode tbl (l2,p2,m2,a2))) (enc1 (encode tbl (l1,p1,m1,a1)))
       (string_of_mn m1) (string_of_args tbl a1) (string_of_label l1)
       (string_of_mn m2) (string_of_args tbl a2) (string_of_label l2);
