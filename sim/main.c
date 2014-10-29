@@ -12,10 +12,13 @@
 #define LINE_LEN 128
 
 void print_usage() {
-  fprintf(stderr, "usage: zsim code [testfile] [options]\n");
+  fprintf(stderr,
+          "usage: zsim code [testfile] [options]\n"
+          "  --help option for more information\n");
 }
 
 void print_options() {
+  fprintf(stderr, "usage: zsim code [testfile] [options]\n");
   fprintf(stderr,
           "options:\n"
           "  --help    Display this information\n"
@@ -24,7 +27,8 @@ void print_options() {
           "  -m        Show addresses and values in every memory access\n"
           "  -w        Output in detail text form in WRITE instructions\n"
           "            (if not designated, output in binary)\n"
-          "  -n        Use native operations in floating-point instructions\n");
+          "  -n        Use native operations in floating-point instructions\n"
+          "  -l <n>    Stop execution in at most n instructions");
 }
 
 int set_test(const char *test_file_path, option_t *opt) {
@@ -67,6 +71,8 @@ int set_test(const char *test_file_path, option_t *opt) {
 
 int set_option(int argc, char **argv, option_t *opt) {
   opt->opt = 0;
+  opt->i_count = 0LL;
+  opt->i_limit = -1LL;
   int i, j;
   for(i=0; i<NUM_OF_GPR; i++) {
     opt->gpr[i].valid = 0;
@@ -86,7 +92,8 @@ int set_option(int argc, char **argv, option_t *opt) {
       print_usage();
       return 1;
     }
-    for(j=1; argv[i][j]; j++) {
+    int jbrk = 0;
+    for(j=1; argv[i][j] && !jbrk; j++) {
       switch(argv[i][j]) {
       case 'd':
         opt->opt |= 1 << OPTION_D;
@@ -104,9 +111,22 @@ int set_option(int argc, char **argv, option_t *opt) {
         opt->opt |= 1 << OPTION_R;
         opt->opt |= 1 << OPTION_D;
         break;
+      case 'l':
+        if(++i < argc) {
+          if(sscanf(argv[i], "%lld", &opt->i_limit) != 1) {
+            fprintf(stderr, "zsim: option format error\n");
+            print_usage();
+            return 1;
+          }
+        } else {
+          fprintf(stderr, "zsim: option format error\n");
+          print_usage();
+          return 1;
+        }
+        jbrk = 1;
+        break;
       default:
         fprintf(stderr, "zsim: unknown option: -%c\n", argv[i][j]);
-        print_usage();
         print_options();
         return 1;
       }
@@ -170,7 +190,7 @@ void show_instructions(char *mem, int noi) {
   }
 }
 
-void show_status(state_t *st) {
+void show_status(state_t *st, option_t *opt) {
   int i;
   fprintf(stderr, "PC   : %08X = %11d\n", st->pc.i, st->pc.i);
   fprintf(stderr, "PR   : %08X\n", st->pr.i);
@@ -182,6 +202,7 @@ void show_status(state_t *st) {
     fprintf(stderr, "FR %2d: %08X = %f\n", i, st->fr[i].i, st->fr[i].f);
   }
   fprintf(stderr, "FPUL : %08X = %f\n", st->fpul.i, st->fpul.f);
+  fprintf(stderr, "total executed instructions: %lld\n", opt->i_count);
 }
 
 void show_status_honly(state_t *st) {
@@ -226,7 +247,6 @@ int main(int argc, char **argv) {
     print_usage();
     return 1;
   } else if(!strcmp(argv[1], "--help")) {
-    print_usage();
     print_options();
     return 0;
   }
@@ -242,7 +262,7 @@ int main(int argc, char **argv) {
 
   run(&st, noi, &opt);
 
-  show_status(&st);
+  show_status(&st, &opt);
   free(st.mem);
   return verify(&st, &opt);
 }

@@ -551,10 +551,12 @@ int exec_inst(state_t *st, option_t *opt) {
 }
 
 void run(state_t *st, int noi, option_t *opt) {
-  while(st->pc.i != noi * 2) {
+  while(st->pc.i != noi * 2 &&
+        (opt->i_limit <= 0 ||  opt->i_count < opt->i_limit)) {
     if(opt->opt >> OPTION_R & 1) {
       show_status_honly(st);
     }
     if(exec_inst(st, opt) < 0) break;
+    opt->i_count++;
   }
 }
