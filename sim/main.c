@@ -20,6 +20,7 @@ void print_options() {
           "options:\n"
           "  --help    Display this information\n"
           "  -d        Show PCs and codes in every execution\n"
+          "  -r        Show contents of all the registers in every execution\n"
           "  -m        Show addresses and values in every memory access\n"
           "  -w        Output in detail text form in WRITE instructions\n"
           "            (if not designated, output in binary)\n"
@@ -99,6 +100,10 @@ int set_option(int argc, char **argv, option_t *opt) {
       case 'n':
         opt->opt |= 1 << OPTION_N;
         break;
+      case 'r':
+        opt->opt |= 1 << OPTION_R;
+        opt->opt |= 1 << OPTION_D;
+        break;
       default:
         fprintf(stderr, "zsim: unknown option: -%c\n", argv[i][j]);
         print_usage();
@@ -168,14 +173,29 @@ void show_instructions(char *mem, int noi) {
 void show_status(state_t *st) {
   int i;
   fprintf(stderr, "PC   : %08X = %11d\n", st->pc.i, st->pc.i);
+  fprintf(stderr, "PR   : %08X\n", st->pr.i);
+  fprintf(stderr, "T    : %d\n", st->sr.i & 1);
   for(i=0; i<NUM_OF_GPR; i++) {
     fprintf(stderr, "R  %2d: %08X = %11d\n", i, st->gpr[i].i, st->gpr[i].i);
   }
   for(i=0; i<NUM_OF_FR; i++) {
     fprintf(stderr, "FR %2d: %08X = %f\n", i, st->fr[i].i, st->fr[i].f);
   }
-  fprintf(stderr, "PR   : %08X\n", st->pr.i);
   fprintf(stderr, "FPUL : %08X = %f\n", st->fpul.i, st->fpul.f);
+}
+
+void show_status_honly(state_t *st) {
+  int i;
+  fprintf(stderr, "PC   : %08X\n", st->pc.i);
+  fprintf(stderr, "PR   : %08X\n", st->pr.i);
+  fprintf(stderr, "T    : %d\n", st->sr.i & 1);
+  for(i=0; i<NUM_OF_GPR; i++) {
+    fprintf(stderr, "R  %2d: %08X\n", i, st->gpr[i].i);
+  }
+  for(i=0; i<NUM_OF_FR; i++) {
+    fprintf(stderr, "FR %2d: %08X\n", i, st->fr[i].i);
+  }
+  fprintf(stderr, "FPUL : %08X\n\n", st->fpul.i);
 }
 
 int verify(state_t *st, option_t *opt) {
@@ -219,8 +239,6 @@ int main(int argc, char **argv) {
   if(initialize(argv[1], &noi, &st)) {
     return 1;
   }
-
-  show_instructions(st.mem, noi);
 
   run(&st, noi, &opt);
 

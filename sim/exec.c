@@ -16,6 +16,10 @@ int extend(int v, int len) {
 }
 
 void mem_st_dw(char *mem, int addr, int *s, option_t *opt) {
+  if(addr % 4) {
+    fprintf(stderr, "WARNING: store: memory address is not aligned (%08X)\n",
+            addr);
+  }
   int old;
   memcpy(&old, mem+addr, 4);
   memcpy(mem+addr, s, 4);
@@ -25,6 +29,10 @@ void mem_st_dw(char *mem, int addr, int *s, option_t *opt) {
 }
 
 void mem_ld_dw(char *mem, int addr, int *d, option_t *opt) {
+  if(addr % 4) {
+    fprintf(stderr, "WARNING: load: memory address is not aligned (%08X)\n",
+            addr);
+  }
   memcpy(d, mem+addr, 4);
   if(opt->opt >> OPTION_M & 1) {
     fprintf(stderr, "ld: addr = %08X    value = %08X\n", addr, *d);
@@ -544,9 +552,9 @@ int exec_inst(state_t *st, option_t *opt) {
 
 void run(state_t *st, int noi, option_t *opt) {
   while(st->pc.i != noi * 2) {
-#ifdef debug
-    show_status(st);
-#endif
+    if(opt->opt >> OPTION_R & 1) {
+      show_status_honly(st);
+    }
     if(exec_inst(st, opt) < 0) break;
   }
 }
