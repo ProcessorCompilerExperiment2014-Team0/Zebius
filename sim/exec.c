@@ -212,7 +212,11 @@ void i_fcmp_gt(state_t *st, int m, int n, option_t *opt) {
 }
 
 void i_fdiv(state_t *st, int m, int n, option_t *opt) {
-  st->fr[n].f /= st->fr[m].f;
+  if(opt->opt >> OPTION_N & 1) {
+    st->fr[n].f /= st->fr[m].f;
+  } else {
+    st->fr[n].u = fmul(st->fr[n].u, finv(st->fr[m].u));
+  }
   inc_pc(st);
 }
 
@@ -235,7 +239,11 @@ void i_fneg(state_t *st, int n, option_t *opt) {
 }
 
 void i_fsqrt(state_t *st, int n, option_t *opt) {
-  st->fr[n].f = sqrtf(st->fr[n].f);
+  if(opt->opt >> OPTION_N & 1) {
+    st->fr[n].f = sqrtf(st->fr[n].f);
+  } else {
+    st->fr[n].u = fsqrt(st->fr[n].u);
+  }
   inc_pc(st);
 }
 
