@@ -514,6 +514,9 @@ int exec_inst(state_t *st, option_t *opt) {
       case 0xA:                 /* FMOV.S(st) */
         i_fmov_s_st(st, param[1], param[0], opt);
         break;
+      case 0xC:                 /* FMOV */
+        i_fmov(st, param[1], param[0]);
+        break;
       case 0xD:
         switch(param[1]) {
         case 0x0:               /* FSTS */
