@@ -7,21 +7,19 @@ use work.zebius_type_p.all;
 
 package zebius_alu_p is
 
-  subtype alu_inst_t is unsigned(3 downto 0);
-
-  constant ALU_INST_NOP : alu_inst_t := "0000";
-  constant ALU_INST_ADD : alu_inst_t := "0001";
-  constant ALU_INST_SUB : alu_inst_t := "0010";
-  constant ALU_INST_AND : alu_inst_t := "0100";
-  constant ALU_INST_OR : alu_inst_t := "0101";
-  constant ALU_INST_NOT : alu_inst_t := "0110";
-  constant ALU_INST_XOR : alu_inst_t := "0111";
-  constant ALU_INST_SHLD : alu_inst_t := "1000";
-  constant ALU_INST_EQ : alu_inst_t := "1001";
-  constant ALU_INST_GT : alu_inst_t := "1010";
-  constant ALU_INST_INC_PC : alu_inst_t := "1011";
-  constant ALU_INST_DISP_PC_L : alu_inst_t := "1100";
-
+  type alu_inst_t is (
+    ALU_INST_NOP,
+    ALU_INST_ADD,
+    ALU_INST_SUB,
+    ALU_INST_AND,
+    ALU_INST_OR,
+    ALU_INST_NOT,
+    ALU_INST_XOR,
+    ALU_INST_SHLD,
+    ALU_INST_EQ,
+    ALU_INST_GT,
+    ALU_INST_INC_PC,
+    ALU_INST_DISP_PC_L);
 
   type alu_in_t is record
     inst : alu_inst_t;
@@ -141,7 +139,7 @@ begin
       when ALU_INST_GT   => dout.o <= alu_gt(din.i1, din.i2);
       when ALU_INST_INC_PC => dout.o <= alu_inc_pc(din.i1, din.i2);
       when ALU_INST_DISP_PC_L => dout.o <= alu_disp_pc_l(din.i1, din.i2);
-      when others        => dout.o <= alu_nop(din.i1, din.i2);
+      when ALU_INST_NOP => dout.o <= alu_nop(din.i1, din.i2);
     end case;
   end process;
 

@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.zebius_alu_p.all;
+use work.zebius_fpu_p.all;
 use work.zebius_sram_controller_p.all;
 use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
@@ -13,6 +14,7 @@ package zebius_core_p is
 
   type core_in_t is record
     alu  : alu_out_t;
+    fpu  : fpu_out_t;
     sin  : u232c_in_out_t;
     sout : u232c_out_out_t;
     sram : sram_controller_out_t;
@@ -20,6 +22,7 @@ package zebius_core_p is
 
   type core_out_t is record
     alu  : alu_in_t;
+    fpu  : fpu_in_t;
     sout : u232c_out_in_t;
     sram : sram_controller_in_t;
   end record;
@@ -48,6 +51,7 @@ use ieee.std_logic_textio.all;
 library work;
 use work.zebius_alu_p.all;
 use work.zebius_core_p.all;
+use work.zebius_fpu_p.all;
 use work.zebius_sram_controller_p.all;
 use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
@@ -169,7 +173,7 @@ begin
             writeline(log, l);
           end if;
 
-          decode_inst(v.inst, v, co.alu, co.sram, co.sout);
+          decode_inst(v.inst, v, co.alu, co.fpu, co.sram, co.sout);
 
           v.state := next_state(v.state, v.mode);
 
@@ -198,11 +202,14 @@ begin
 
         when CORE_WRITE_BACK =>
           case v.wr_src is
-            when WR_INPUT =>
-              v.reg_file(v.wr_idx) :=  resize(v.sin_data, 32);
-
             when WR_ALU =>
               v.reg_file(v.wr_idx) := ci.alu.o;
+
+            when WR_FPU =>
+              v.reg_file(v.wr_idx) := ci.fpu.o;
+
+            when WR_INPUT =>
+              v.reg_file(v.wr_idx) :=  resize(v.sin_data, 32);
 
             when WR_MEMORY =>
               v.reg_file(v.wr_idx) := ci.sram.data(31 downto 0);

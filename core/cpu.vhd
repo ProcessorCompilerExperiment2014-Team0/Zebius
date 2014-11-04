@@ -7,6 +7,7 @@ use unisim.vcomponents.all;
 
 library work;
 use work.zebius_alu_p.all;
+use work.zebius_fpu_p.all;
 use work.zebius_core_p.all;
 use work.zebius_sram_controller_p.all;
 use work.zebius_u232c_in_p.all;
@@ -65,6 +66,11 @@ begin
   alu : zebius_alu
     port map ( din  => co.alu,
                dout => ci.alu);
+
+  fpu : zebius_fpu
+    port map (
+      din  => co.fpu,
+      dout => ci.fpu);
 
   sin : u232c_in
     generic map ( wtime => wtime)

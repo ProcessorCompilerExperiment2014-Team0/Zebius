@@ -24,6 +24,26 @@
     "0100nnnn00101011"
     "0100nnnn00001011"
     "0000000000001011"))
+(defparameter fpu-instruction-set
+  '("1111nnnn10001101"
+	"1111nnnn10011101"
+	"1111nnnnmmmm1100"
+	"1111nnnnmmmm1000"
+	"1111nnnnmmmm1010"
+	"1111nnnnmmmm0000"
+	"1111nnnnmmmm0100"
+	"1111nnnnmmmm0101"
+	"1111nnnnmmmm0011"
+	"1111nnnnmmmm0010"
+	"1111nnnn01001101"
+	"1111nnnn01101101"
+	"1111nnnnmmmm0001"
+	"0100mmmm01011010"
+	"0000nnnn01011010"
+	"1111mmmm00011101"
+	"1111nnnn00001101"
+	"1111mmmm00111101"
+	"1111nnnn00101101"))
 
 (defun split (inst)
     (list (subseq inst 0 4) (subseq inst 4 8) (subseq inst 8 12) (subseq inst 12 16)))

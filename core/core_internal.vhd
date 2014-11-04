@@ -7,6 +7,7 @@ use work.zebius_type_p.all;
 use work.zebius_util_p.all;
 
 use work.zebius_alu_p.all;
+use work.zebius_fpu_p.all;
 use work.zebius_sram_controller_p.all;
 use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
@@ -54,15 +55,16 @@ package zebius_core_internal_p is
   -- types for each core_state
   subtype wtime_t is integer range 0 to 63;
   type wr_src_t is (
-    WR_INPUT,
     WR_ALU,
+    WR_FPU,
+    WR_INPUT,
     WR_MEMORY);
   type next_pc_t is (
-    PC_SEQ,
     PC_BR_TRUE,
     PC_BR_FALSE,
     PC_BRA,
-    PC_JMP);
+    PC_JMP,
+    PC_SEQ);
 
   -- latch
   type ratch_t is record
@@ -98,6 +100,7 @@ package zebius_core_internal_p is
     inst : zebius_inst_t;
     v : inout ratch_t;
     signal alu : out alu_in_t;
+    signal fpu : out fpu_in_t;
     signal mem : out sram_controller_in_t;
     signal sout : out u232c_out_in_t);
 
@@ -213,6 +216,7 @@ package body zebius_core_internal_p is
     inst : zebius_inst_t;
     v : inout ratch_t;
     signal alu : out alu_in_t;
+    signal fpu : out fpu_in_t;
     signal mem : out sram_controller_in_t;
     signal sout : out u232c_out_in_t) is
 
@@ -505,6 +509,215 @@ package body zebius_core_internal_p is
       v.mode := MODE_BRANCH_ABS;
       v.nextpc := PC_JMP;
       v.jmp_idx := 1;
+
+    elsif inst.a = "1111" and inst.c = "1000" and inst.d = "1101" then
+      -- FLDI0 FRn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_MOV_REG;
+      v.reg_file(n+32) := x"00000000";
+
+    elsif inst.a = "1111" and inst.c = "1001" and inst.d = "1101" then
+      -- FLDI1 FRn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_MOV_REG;
+      v.reg_file(n+32) := x"3f800000";
+
+    elsif inst.a = "1111" and inst.d = "1100" then
+      -- FMOV FRm FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_MOV_REG;
+      v.reg_file(n+32) := v.reg_file(m + 32);
+
+    elsif inst.a = "1111" and inst.d = "1000" then
+      -- FMOV.S @Rm FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      assert v.reg_file(m+16)(1 downto 0) = "00"
+        report "memory access to unaligned address"
+        severity warning;
+
+
+      v.mode := MODE_LOAD;
+      v.wtime := 1;
+      v.wr_src := WR_MEMORY;
+      v.wr_idx := n+32;
+
+      mem.addr <= v.reg_file(m+16)(21 downto 0);
+      mem.dir <= DIR_READ;
+
+    elsif inst.a = "1111" and inst.d = "1010" then
+      -- FMOV.S FRm @Rn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_STORE;
+
+      assert v.reg_file(n+16)(1 downto 0) = "00"
+        report "memory access to unaligned address"
+        severity warning;
+
+      mem.addr <= v.reg_file(n+16)(21 downto 0);
+      mem.data <= "0000" & v.reg_file(m+32);
+      mem.dir <= DIR_WRITE;
+
+    elsif inst.a = "1111" and inst.d = "0000" then
+      -- FADD FRm FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_ADD;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= v.reg_file(m+32);
+
+    elsif inst.a = "1111" and inst.d = "0100" then
+      -- FCMP/EQ FRm FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_EQ;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= v.reg_file(m+32);
+
+    elsif inst.a = "1111" and inst.d = "0101" then
+      -- FCMP/GT FRm FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_GT;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= v.reg_file(m+32);
+
+    elsif inst.a = "1111" and inst.d = "0011" then
+      -- FDIV FRm FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_DIV;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= v.reg_file(m+32);
+
+    elsif inst.a = "1111" and inst.d = "0010" then
+      -- FMUL FRm FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_MUL;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= v.reg_file(m+32);
+
+    elsif inst.a = "1111" and inst.c = "0100" and inst.d = "1101" then
+      -- FNEG FRn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_NEG;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= x"00000000";
+
+    elsif inst.a = "1111" and inst.c = "0110" and inst.d = "1101" then
+      -- FSQRT FRn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_SQRT;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= x"00000000";
+
+    elsif inst.a = "1111" and inst.d = "0001" then
+      -- FSUB FRn
+      n := to_integer(inst.b);
+      m := to_integer(inst.c);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_SUB;
+      fpu.i1 <= v.reg_file(n+32);
+      fpu.i2 <= v.reg_file(m+32);
+
+    elsif inst.a = "0100" and inst.c = "0101" and inst.d = "1010" then
+      -- LDS Rm FPUL
+      m := to_integer(inst.b);
+
+      v.mode := MODE_MOV_REG;
+      v.reg_file(4) := v.reg_file(m+16);
+
+    elsif inst.a = "0000" and inst.c = "0101" and inst.d = "1010" then
+      -- STS FPUL Rn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_MOV_REG;
+      v.reg_file(n+16) := v.reg_file(4);
+
+    elsif inst.a = "1111" and inst.c = "0001" and inst.d = "1101" then
+      -- FLDS FRm FPUL
+      m := to_integer(inst.b);
+
+      v.mode := MODE_MOV_REG;
+      v.reg_file(4) := v.reg_file(m+32);
+
+    elsif inst.a = "1111" and inst.c = "0000" and inst.d = "1101" then
+      -- FSTS FPUL FRn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_MOV_REG;
+      v.reg_file(n+32) := v.reg_file(4);
+
+    elsif inst.a = "1111" and inst.c = "0011" and inst.d = "1101" then
+      -- FTRC FRm FPUL
+      m := to_integer(inst.b);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := 4;
+
+      fpu.inst <= FPU_INST_FTOI;
+      fpu.i1 <= v.reg_file(m+32);
+      fpu.i2 <= x"00000000";
+
+    elsif inst.a = "1111" and inst.c = "0010" and inst.d = "1101" then
+      -- FLOAT FLUL FRn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_ARITH;
+      v.wr_src := WR_FPU;
+      v.wr_idx := n+32;
+
+      fpu.inst <= FPU_INST_FTOI;
+      fpu.i1 <= v.reg_file(4);
+      fpu.i2 <= x"00000000";
 
     else
       assert false report "invalid instruction" severity FAILURE;

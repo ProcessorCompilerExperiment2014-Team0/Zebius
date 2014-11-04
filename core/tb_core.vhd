@@ -9,10 +9,12 @@ use std.textio.all;
 library work;
 use work.sramsim.all;
 use work.zebius_alu_p.all;
+use work.zebius_fpu_p.all;
 use work.zebius_core_p.all;
 use work.zebius_sram_controller_p.all;
 use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
+use work.zebius_type_p.all;
 
 
 entity tb_core is
@@ -31,7 +33,22 @@ architecture testbench of tb_core is
 
   signal clk : std_logic;
   signal ci  : core_in_t;
-  signal co  : core_out_t;
+  signal co  : core_out_t := (
+    alu => (
+      inst => ALU_INST_NOP,
+      i1 => (others => '0'),
+      i2 => (others => '0')),
+    fpu => (
+      inst => FPU_INST_NOP,
+      i1 => (others => '0'),
+      i2 => (others => '0')),
+    sout => (
+      data => (others => '0'),
+      go => '0'),
+    sram => (
+      data => (others => '0'),
+      addr => (others => '0'),
+      dir => DIR_READ));
 
   signal rx : std_logic;
   signal tx : std_logic;
@@ -66,6 +83,11 @@ begin
     port map (
       din  => co.alu,
       dout => ci.alu);
+
+  fpu : zebius_fpu
+    port map (
+      din  => co.fpu,
+      dout => ci.fpu);
 
   sin : u232c_in
     generic map (
