@@ -46,7 +46,8 @@ use ieee.numeric_std.all;
 
 library work;
 use work.fadd_p.all;
-use work.finv_p.all;
+use work.fdiv_p.all;
+use work.fneg_p.all;
 use work.fmul_p.all;
 use work.fsqrt_p.all;
 use work.fsub_p.all;
@@ -67,7 +68,7 @@ architecture behavior of zebius_fpu is
   signal a: std_logic_vector(31 downto 0) := (others => '0');
   signal b: std_logic_vector(31 downto 0) := (others => '0');
   signal add_s: std_logic_vector(31 downto 0);
-  signal inv_s: std_logic_vector(31 downto 0);
+  signal div_s: std_logic_vector(31 downto 0);
   signal mul_s: std_logic_vector(31 downto 0);
   signal neg_s: std_logic_vector(31 downto 0);
   signal sqrt_s: std_logic_vector(31 downto 0);
@@ -81,8 +82,9 @@ begin
     b => b,
     s => add_s);
 
-  inv: finv port map (
+  div: fdiv port map (
     a => a,
+    b => b,
     s => sub_s);
 
   mul: fmul port map (
@@ -90,9 +92,9 @@ begin
     b => b,
     s => mul_s);
 
-  --neg: fneg port map (
-  --  a => a,
-  --  s => neg_s);
+  neg: fneg port map (
+    a => a,
+    s => neg_s);
 
   sqrt: fsqrt port map (
     a => a,
@@ -113,9 +115,9 @@ begin
     case din.inst is
       when FPU_INST_ADD => dout.o <= unsigned(add_s);
       when FPU_INST_SUB => dout.o <= unsigned(sub_s);
-      when FPU_INST_DIV => dout.o <= unsigned(inv_s);
+      when FPU_INST_DIV => dout.o <= unsigned(div_s);
       when FPU_INST_MUL => dout.o <= unsigned(mul_s);
-      when FPU_INST_NEG => assert false report "FNEG is not implemented" severity error;
+      when FPU_INST_NEG => dout.o <= unsigned(neg_s);
       when FPU_INST_EQ => assert false report "FCMP/EQ is not implemented" severity error;
       when FPU_INST_GT => assert false report "FCMP/GT is not implemented" severity error;
       when FPU_INST_SQRT => dout.o <= unsigned(sqrt_s);
