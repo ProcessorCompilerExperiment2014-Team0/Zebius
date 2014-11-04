@@ -20,6 +20,9 @@ void mem_st_dw(state_t *st, char *mem, int addr, int *s) {
     fprintf(stderr, "WARNING: store: memory address is not aligned (%08X)\n",
             addr);
   }
+  if(addr < SIZE_OF_BLOCKRAM) {
+    fprintf(stderr, "WARNING: store: address %08X is read only\n", addr);
+  }
   int old;
   memcpy(&old, mem+addr, 4);
   memcpy(mem+addr, s, 4);
