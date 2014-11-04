@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.zebius_alu_p.all;
 use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
 
 
@@ -12,6 +13,7 @@ package zebius_core_p is
 
   type core_in_t is record
     alu  : alu_out_t;
+    sin  : u232c_in_out_t;
     sout : u232c_out_out_t;
     sram : sram_controller_out_t;
   end record;
@@ -47,6 +49,7 @@ library work;
 use work.zebius_alu_p.all;
 use work.zebius_core_p.all;
 use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
 
 use work.zebius_core_internal_p.all;
@@ -76,6 +79,8 @@ architecture behavior of zebius_core is
     wr_src => WR_ALU,
     mem_data => (others => '0'),
     mem_dir => DIR_READ,
+    sin_id => U232C_IN_FIRST_ID,
+    sin_data => (others => '0'),
     sout_data => (others => '0'),
     wtime => 0,
     nextpc => PC_SEQ,
@@ -177,6 +182,14 @@ begin
 
           v.state := next_state(v.state, v.mode);
 
+        when CORE_INPUT =>
+          if ci.sin.id /= v.sin_id then
+            v.sin_id := ci.sin.id;
+            v.sin_data := ci.sin.data;
+
+            v.state := next_state(v.state, v.mode);
+          end if;
+
         when CORE_OUTPUT =>
           if ci.sout.busy = '0' then
             co.sout.data <= v.sout_data;
@@ -187,6 +200,9 @@ begin
 
         when CORE_WRITE_BACK =>
           case v.wr_src is
+            when WR_INPUT =>
+              v.reg_file(v.wr_idx) :=  resize(v.sin_data, 32);
+
             when WR_ALU =>
               v.reg_file(v.wr_idx) := ci.alu.o;
 

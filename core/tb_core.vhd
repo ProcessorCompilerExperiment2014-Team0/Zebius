@@ -1,12 +1,17 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_textio.all;
+
+library std;
+use std.textio.all;
 
 library work;
 use work.sramsim.all;
 use work.zebius_alu_p.all;
 use work.zebius_core_p.all;
 use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
 
 
@@ -16,11 +21,20 @@ end tb_core;
 
 architecture testbench of tb_core is
 
+  file ifile : text open read_mode is "input";
+  signal cnt : unsigned(15 downto 0) := (others => '0');
+  signal idx : integer range -1 to 8 := 8;
+  signal data : unsigned(7 downto 0) := (others => '0');
+
+
+  constant wtime : unsigned(15 downto 0) := x"0010";
+
   signal clk : std_logic;
   signal ci  : core_in_t;
   signal co  : core_out_t;
 
-  signal rs_tx : std_logic;
+  signal rx : std_logic;
+  signal tx : std_logic;
 
   signal zd    : std_logic_vector(31 downto 0);
   signal zdp   : std_logic_vector(3  downto 0);
@@ -42,7 +56,7 @@ begin
 
   core : zebius_core
     generic map (
-      enable_log => true)
+      enable_log => false)
     port map (
       clk => clk,
       ci  => ci,
@@ -53,16 +67,23 @@ begin
       din  => co.alu,
       dout => ci.alu);
 
+  sin : u232c_in
+    generic map (
+      wtime => wtime)
+    port map (
+      clk => clk,
+      rx => rx,
+      dout => ci.sin);
+
   sout : u232c_out
     generic map (
       report_write => true,
-      wtime => x"0005")
+      wtime => wtime)
     port map (
       clk  => clk,
-      data => co.sout.data,
-      go   => co.sout.go,
-      busy => ci.sout.busy,
-      tx   => rs_tx);
+      tx   => tx,
+      din  => co.sout,
+      dout => ci.sout);
 
   controller : sram_controller
     port map (
@@ -131,6 +152,36 @@ begin
       zz => zza,
       xft => xft,
       xlbo => xlbo);
+
+  readfile: process(clk)
+    variable l : line;
+    variable byte : std_logic_vector(7 downto 0);
+  begin
+    if rising_edge(clk) then
+      if cnt = 0 then
+        cnt <= wtime;
+
+        case idx is
+          when -1 =>
+            rx <= '0';
+            idx <= 0;
+          when 8 =>
+            if not endfile(ifile) then
+              rx <= '1';
+              idx <= -1;
+              readline(ifile, l);
+              hread(l, byte);
+              data <= unsigned(byte);
+            end if;
+          when others =>
+            rx <= data(idx);
+            idx <= idx+1;
+        end case;
+      else
+        cnt <= cnt - 1;
+      end if;
+    end if;
+  end process;
 
   clockgen: process
   begin

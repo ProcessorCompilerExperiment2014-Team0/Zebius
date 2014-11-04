@@ -8,6 +8,7 @@ use work.zebius_util_p.all;
 
 use work.zebius_alu_p.all;
 use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
 
 
@@ -31,6 +32,7 @@ package zebius_core_internal_p is
     CORE_FETCH_INST,
     CORE_DECODE_INST,
     CORE_ACCESS_MEMORY,
+    CORE_INPUT,
     CORE_OUTPUT,
     CORE_WRITE_BACK,
     CORE_UPDATE_PC);
@@ -40,6 +42,7 @@ package zebius_core_internal_p is
 
     MODE_FETCH_INST,
     MODE_ARITH,
+    MODE_INPUT,
     MODE_OUTPUT,
     MODE_MOV_REG,
     MODE_LOAD,
@@ -51,6 +54,7 @@ package zebius_core_internal_p is
   -- types for each core_state
   subtype wtime_t is integer range 0 to 63;
   type wr_src_t is (
+    WR_INPUT,
     WR_ALU,
     WR_MEMORY);
   type next_pc_t is (
@@ -73,8 +77,11 @@ package zebius_core_internal_p is
     -- memory
     mem_data : sram_data_t;
     mem_dir : iodir_t;
+    -- input
+    sin_id : u232c_in_id_t;
+    sin_data : unsigned(7 downto 0);
     -- output
-    sout_data : std_logic_vector (7 downto 0);
+    sout_data : unsigned(7 downto 0);
     -- wait
     wtime : wtime_t;
     -- update pc
@@ -128,6 +135,16 @@ package body zebius_core_internal_p is
               when others =>
                 assert false report "invalid core state" severity ERROR;
             end case;
+
+          when MODE_INPUT =>
+            case state is
+              when CORE_DECODE_INST => return CORE_INPUT;
+              when CORE_INPUT => return CORE_WRITE_BACK;
+              when CORE_WRITE_BACK => return CORE_UPDATE_PC;
+              when others =>
+                assert false report "invalid core state" severity ERROR;
+            end case;
+
 
           when MODE_OUTPUT =>
             case state is
@@ -207,12 +224,20 @@ package body zebius_core_internal_p is
 
     v.nextpc := PC_SEQ;
 
-    if inst.a = "0000" and inst.c = "0000" and inst.d = "0000" then
+    if inst.a = "0000" and inst.c = "0000" and inst.d = "0001" then
+      -- read Rn
+      n := to_integer(inst.b);
+
+      v.mode := MODE_INPUT;
+      v.wr_idx := n+16;
+      v.wr_src := WR_INPUT;
+
+    elsif inst.a = "0000" and inst.c = "0000" and inst.d = "0000" then
       -- write Rn
       n := to_integer(inst.b);
 
       v.mode := MODE_OUTPUT;
-      v.sout_data := std_logic_vector(v.reg_file(n+16)(7 downto 0));
+      v.sout_data := v.reg_file(n+16)(7 downto 0);
 
     elsif inst.a = "0000" and inst.c = "0000" and inst.d = "0001" then
       -- read Rn

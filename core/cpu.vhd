@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -8,6 +9,7 @@ library work;
 use work.zebius_alu_p.all;
 use work.zebius_core_p.all;
 use work.zebius_sram_controller_p.all;
+use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
 
 
@@ -37,11 +39,13 @@ end cpu;
 
 architecture behavior of cpu is
 
+  constant wtime : unsigned(15 downto 0) := x"1b00";
+
   signal ci  : core_in_t;
   signal co  : core_out_t;
 
   signal clk,iclk: std_logic;
-  
+
 begin
   ib: ibufg
   port map (
@@ -62,12 +66,17 @@ begin
     port map ( din  => co.alu,
                dout => ci.alu);
 
+  sin : u232c_in
+    generic map ( wtime => wtime)
+    port map ( clk => clk,
+               rx => rs_rx,
+               dout => ci.sin);
+
   sout : u232c_out
-    generic map ( wtime => x"1ADB" )
-    port map ( clk  => clk,
-               data => co.sout.data,
-               go   => co.sout.go,
-               busy => ci.sout.busy,
+    generic map ( wtime => wtime)
+    port map ( clk => clk,
+               din => co.sout,
+               dout => ci.sout,
                tx   => rs_tx);
 
   sram : sram_controller
