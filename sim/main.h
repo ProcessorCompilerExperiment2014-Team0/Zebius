@@ -6,6 +6,7 @@
 #define NUM_OF_GPR 16
 #define NUM_OF_FR 16
 #define SIZE_OF_SRAM (1 << 22)
+#define SIZE_OF_BLOCKRAM (1 << 10)
 
 #define OPTION_D 0
 #define OPTION_M 1
@@ -13,11 +14,25 @@
 #define OPTION_N 3
 #define OPTION_R 4
 
+enum inst {
+  I_WRITE, I_READ, I_MOV_I, I_MOV_L_DISP, I_MOV, I_MOV_L_ST, I_MOV_L_LD,
+  I_STS_PR, I_ADD, I_ADD_I, I_CMP_EQ, I_CMP_GT, I_SUB, I_AND, I_NOT, I_OR,
+  I_XOR, I_SHLD, I_BF, I_BT, I_BRA, I_JMP, I_JSR, I_RTS, I_FLDI0, I_FLDI1,
+  I_FMOV, I_FMOV_S_LD, I_FMOV_S_ST, I_FADD, I_FCMP_EQ, I_FCMP_GT, I_FDIV,
+  I_FMUL, I_FNEG, I_FSQRT, I_FSUB, I_LDS, I_STS_FPUL, I_FLDS, I_FSTS, I_FTRC,
+  I_FLOAT, I_SENTINEL
+};
+
 typedef union {
   float f;
   int i;
   uint32_t u;
 } data_t;
+
+typedef struct {
+  int valid;
+  data_t v;
+} test_t;
 
 typedef struct {
   data_t gpr[NUM_OF_GPR];       /* General Purpose Register */
@@ -31,22 +46,16 @@ typedef struct {
   data_t fpscr;
   
   char *mem;                    /* SRAM */
-} state_t;
 
-typedef struct {
-  int valid;
-  data_t v;
-} test_t;
-
-typedef struct {
   int opt;
-  test_t gpr[NUM_OF_GPR];
-  test_t fr[NUM_OF_FR];
+  test_t t_gpr[NUM_OF_GPR];
+  test_t t_fr[NUM_OF_FR];
   long long i_count;
   long long i_limit;
-} option_t;
+  long long i_stat[I_SENTINEL];
+} state_t;
 
-void show_status(state_t *st, option_t *opt);
+void show_status(state_t *st);
 void show_status_honly(state_t *st);
 
 #endif

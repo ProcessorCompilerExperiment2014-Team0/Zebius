@@ -11,6 +11,52 @@
 
 #define LINE_LEN 128
 
+const char *inst_name[] = {
+  "WRITE Rn            ",
+  "READ Rn             ",
+  "MOV #imm,Rn         ",
+  "MOV.L @(disp*,PC),Rn",
+  "MOV Rm,Rn           ",
+  "MOV.L Rm,@Rn        ",
+  "MOV.L @Rm,Rn        ",
+  "STS PR,Rn           ",
+  "ADD Rm,Rn           ",
+  "ADD #imm,Rn         ",
+  "CMP/EQ Rm,Rn        ",
+  "CMP/GT Rm,Rn        ",
+  "SUB Rm,Rn           ",
+  "AND Rm,Rn           ",
+  "NOT Rm,Rn           ",
+  "OR Rm,Rn            ",
+  "XOR Rm,Rn           ",
+  "SHLD Rm,Rn          ",
+  "BF label            ",
+  "BT label            ",
+  "BRA label           ",
+  "JMP @Rn             ",
+  "JSR @Rn             ",
+  "RTS                 ",
+  "FLDI0 FRn           ",
+  "FLDI1 FRn           ",
+  "FMOV FRm,FRn        ",
+  "FMOV.S @Rm,FRn      ",
+  "FMOV.S FRm,@Rn      ",
+  "FADD FRm,FRn        ",
+  "FCMP/EQ FRm,FRn     ",
+  "FCMP/GT FRm,FRn     ",
+  "FDIV FRm,FRn        ",
+  "FMUL FRm,FRn        ",
+  "FNEG FRn            ",
+  "FSQRT FRn           ",
+  "FSUB FRm,FRn        ",
+  "LDS FRm,FPUL        ",
+  "STS FPUL,Rn         ",
+  "FLDS FRm,FPUL       ",
+  "FSTS FPUL,FRn       ",
+  "FTRC FRm,FPUL       ",
+  "FLOAT FPUL,FRn      ",
+};
+
 void print_usage() {
   fprintf(stderr,
           "usage: zsim code [testfile] [options]\n"
@@ -28,10 +74,10 @@ void print_options() {
           "  -w        Output in detail text form in WRITE instructions\n"
           "            (if not designated, output in binary)\n"
           "  -n        Use native operations in floating-point instructions\n"
-          "  -l <n>    Stop execution in at most n instructions");
+          "  -l <n>    Stop execution in at most n instructions\n");
 }
 
-int set_test(const char *test_file_path, option_t *opt) {
+int set_test(const char *test_file_path, state_t *st) {
   FILE *test_file = fopen(test_file_path, "r");
   if(!test_file) {
     perror("test file");
@@ -45,8 +91,8 @@ int set_test(const char *test_file_path, option_t *opt) {
       continue;
     case 'R':
       if(sscanf(buf, "R%d %X", &n, &v) == 2) {
-        opt->gpr[n].valid = 1;
-        opt->gpr[n].v.i = v;
+        st->t_gpr[n].valid = 1;
+        st->t_gpr[n].v.i = v;
       } else {
         fprintf(stderr, "zsim: testfile format error:\n%s\n", buf);
         return 1;
@@ -54,8 +100,8 @@ int set_test(const char *test_file_path, option_t *opt) {
       break;
     case 'F':
       if(sscanf(buf, "FR%d %X", &n, &v) == 2) {
-        opt->fr[n].valid = 1;
-        opt->fr[n].v.i = v;
+        st->t_fr[n].valid = 1;
+        st->t_fr[n].v.i = v;
       } else {
         fprintf(stderr, "zsim: testfile format error:\n%s\n", buf);
         return 1;
@@ -69,21 +115,24 @@ int set_test(const char *test_file_path, option_t *opt) {
   return 0;
 }
 
-int set_option(int argc, char **argv, option_t *opt) {
-  opt->opt = 0;
-  opt->i_count = 0LL;
-  opt->i_limit = -1LL;
+int set_option(int argc, char **argv, state_t *st) {
   int i, j;
+  st->opt = 0;
+  st->i_count = 0LL;
+  st->i_limit = -1LL;
+  for(i=0; i<I_SENTINEL; i++) {
+    st->i_stat[i] = 0;
+  }
   for(i=0; i<NUM_OF_GPR; i++) {
-    opt->gpr[i].valid = 0;
+    st->t_gpr[i].valid = 0;
   }
   for(i=0; i<NUM_OF_FR; i++) {
-    opt->fr[i].valid = 0;
+    st->t_fr[i].valid = 0;
   }
   if(argc < 3) return 0;
   i = 2;
   if(argv[2][0] != '-') {
-    if(set_test(argv[2], opt)) return 1;
+    if(set_test(argv[2], st)) return 1;
     i++;
   }
   for(; i<argc; i++) {
@@ -96,24 +145,24 @@ int set_option(int argc, char **argv, option_t *opt) {
     for(j=1; argv[i][j] && !jbrk; j++) {
       switch(argv[i][j]) {
       case 'd':
-        opt->opt |= 1 << OPTION_D;
+        st->opt |= 1 << OPTION_D;
         break;
       case 'm':
-        opt->opt |= 1 << OPTION_M;
+        st->opt |= 1 << OPTION_M;
         break;
       case 'w':
-        opt->opt |= 1 << OPTION_W;
+        st->opt |= 1 << OPTION_W;
         break;
       case 'n':
-        opt->opt |= 1 << OPTION_N;
+        st->opt |= 1 << OPTION_N;
         break;
       case 'r':
-        opt->opt |= 1 << OPTION_R;
-        opt->opt |= 1 << OPTION_D;
+        st->opt |= 1 << OPTION_R;
+        st->opt |= 1 << OPTION_D;
         break;
       case 'l':
         if(++i < argc) {
-          if(sscanf(argv[i], "%lld", &opt->i_limit) != 1) {
+          if(sscanf(argv[i], "%lld", &st->i_limit) != 1) {
             fprintf(stderr, "zsim: option format error\n");
             print_usage();
             return 1;
@@ -190,7 +239,7 @@ void show_instructions(char *mem, int noi) {
   }
 }
 
-void show_status(state_t *st, option_t *opt) {
+void show_status(state_t *st) {
   int i;
   fprintf(stderr, "PC   : %08X = %11d\n", st->pc.i, st->pc.i);
   fprintf(stderr, "PR   : %08X\n", st->pr.i);
@@ -202,7 +251,10 @@ void show_status(state_t *st, option_t *opt) {
     fprintf(stderr, "FR %2d: %08X = %f\n", i, st->fr[i].i, st->fr[i].f);
   }
   fprintf(stderr, "FPUL : %08X = %f\n", st->fpul.i, st->fpul.f);
-  fprintf(stderr, "total executed instructions: %lld\n", opt->i_count);
+  fprintf(stderr, "total executed instructions: %lld\n", st->i_count);
+  for(i=0; i<I_SENTINEL; i++) {
+    fprintf(stderr, "%s       : %lld\n", inst_name[i], st->i_stat[i]);
+  }
 }
 
 void show_status_honly(state_t *st) {
@@ -219,22 +271,22 @@ void show_status_honly(state_t *st) {
   fprintf(stderr, "FPUL : %08X\n\n", st->fpul.i);
 }
 
-int verify(state_t *st, option_t *opt) {
+int verify(state_t *st) {
   int res = 0;
   int i;
   for(i=0; i<NUM_OF_GPR; i++) {
-    if(opt->gpr[i].valid && st->gpr[i].i != opt->gpr[i].v.i) {
+    if(st->t_gpr[i].valid && st->gpr[i].i != st->t_gpr[i].v.i) {
       fprintf(stderr, "test failed: R%d\n"
               "expected: %08X\n"
-              "actual  : %08X\n", i, opt->gpr[i].v.i, st->gpr[i].i);
+              "actual  : %08X\n", i, st->t_gpr[i].v.i, st->gpr[i].i);
       res = 1;
     }
   }
   for(i=0; i<NUM_OF_FR; i++) {
-    if(opt->fr[i].valid && st->fr[i].i != opt->fr[i].v.i) {
+    if(st->t_fr[i].valid && st->fr[i].i != st->t_fr[i].v.i) {
       fprintf(stderr, "test failed: FR%d\n"
               "expected: %08X\n"
-              "actual  : %08X\n", i, opt->fr[i].v.i, st->fr[i].i);
+              "actual  : %08X\n", i, st->t_fr[i].v.i, st->fr[i].i);
       res = 1;
     }
   }
@@ -250,19 +302,18 @@ int main(int argc, char **argv) {
     print_options();
     return 0;
   }
-  option_t opt;
-  if(set_option(argc, argv, &opt)) {
+  state_t st;
+  if(set_option(argc, argv, &st)) {
     return 1;
   }
-  state_t st;
   int noi;
   if(initialize(argv[1], &noi, &st)) {
     return 1;
   }
 
-  run(&st, noi, &opt);
+  run(&st, noi);
 
-  show_status(&st, &opt);
+  show_status(&st);
   free(st.mem);
-  return verify(&st, &opt);
+  return verify(&st);
 }
