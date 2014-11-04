@@ -16,12 +16,18 @@ int extend(int v, int len) {
 }
 
 void mem_st_dw(state_t *st, char *mem, int addr, int *s) {
+  if(addr < 0 || addr > SIZE_OF_SRAM - 4) {
+    fprintf(stderr, "ERROR: store: memory address is out of range (%08X)\n",
+            addr);
+    return;
+  }
   if(addr % 4) {
     fprintf(stderr, "WARNING: store: memory address is not aligned (%08X)\n",
             addr);
   }
   if(addr < SIZE_OF_BLOCKRAM) {
-    fprintf(stderr, "WARNING: store: address %08X is read only\n", addr);
+    fprintf(stderr, "WARNING: store: memory address is read only (%08X)\n",
+            addr);
   }
   int old;
   memcpy(&old, mem+addr, 4);
@@ -32,6 +38,11 @@ void mem_st_dw(state_t *st, char *mem, int addr, int *s) {
 }
 
 void mem_ld_dw(state_t *st, char *mem, int addr, int *d) {
+  if(addr < 0 || addr > SIZE_OF_SRAM - 4) {
+    fprintf(stderr, "ERROR: load: memory address is out of range (%08X)\n",
+            addr);
+    return;
+  }
   if(addr % 4) {
     fprintf(stderr, "WARNING: load: memory address is not aligned (%08X)\n",
             addr);
@@ -370,6 +381,11 @@ void inst_error(int inst) {
 }
 
 int exec_inst(state_t *st) {
+  if(st->pc.i < 0 || st->pc.i > SIZE_OF_SRAM - 4) {
+    fprintf(stderr, "ERROR: program counter is out of range (%08X)\n",
+            st->pc.i);
+    return -1;
+  }
   int inst;
   memcpy(&inst, st->mem + st->pc.i, 2);
   if(st->opt >> OPTION_D & 1) {
