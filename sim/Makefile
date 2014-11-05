@@ -4,12 +4,11 @@ LD = gcc
 LDFLAGS = -lm
 TARG = zsim
 
-FPUS = fpu/def.o fpu/fadd.o fpu/fsub.o fpu/fmul.o fpu/fneg.o \
-       fpu/finv.o fpu/fsqrt.o
+FPUS = def.o fadd.o fsub.o fmul.o fneg.o finv.o fsqrt.o
 
 all: $(TARG)
 
-zsim: main.o exec.o $(FPUS)
+zsim: main.o exec.o $(addprefix ../fpu/, $(FPUS))
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 main.o: main.c main.h exec.h
@@ -17,6 +16,6 @@ main.o: main.c main.h exec.h
 exec.o: exec.c main.h exec.h fpu.h
 
 clean:
-	rm -rf $(TARG) $(FPUS) *.o
+	rm -rf $(TARG) $(addprefix ../fpu/, $(FPUS)) *.o
 
 .PHONY: all clean
