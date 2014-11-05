@@ -53,7 +53,6 @@ use work.zebius_u232c_in_p.all;
 use work.zebius_u232c_out_p.all;
 
 use work.zebius_core_internal_p.all;
-use work.zebius_loader_p.all;
 use work.zebius_type_p.all;
 use work.zebius_util_p.all;
 
@@ -92,7 +91,6 @@ begin
 
   cycle: process(clk)
     variable v : ratch_t;
-    variable inst_idx : integer range 0 to array_bound;
     variable i : integer range 0 to 15;
     variable l : line;
   begin
