@@ -70,7 +70,8 @@ void i_write(state_t *st, int n) {
 void i_read(state_t *st, int n) {
   int v;
   fprintf(stderr, "read into R%d: ", n);
-  if(scanf("%X", &v) == EOF) {
+  v = getchar();
+  if(v == EOF) {
     perror("read");
     return;
   }
