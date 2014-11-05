@@ -1,4 +1,4 @@
 [submodule "sim/fpu"]
-	path = sim/fpu
+	path = fpu
 	url = https://github.com/ProcessorCompilerExperiment2014-Team0/FPU
 
