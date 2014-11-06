@@ -154,7 +154,33 @@ int set_option(int argc, char **argv, state_t *st) {
         st->opt |= 1 << OPTION_W;
         break;
       case 'n':
-        st->opt |= 1 << OPTION_N;
+        if(i+1 >= argc || argv[i+1][0] == '-') {
+          st->opt |= 1 << OPTION_N;
+          break;
+        }
+        for(i++; i < argc; i++) {
+          if(argv[i][0] == '-') {
+            i--;
+            break;
+          } else if(!strcmp(argv[i], "FADD")) {
+            st->opt |= 1 << OPTION_N_FADD;
+          } else if(!strcmp(argv[i], "FDIV")) {
+            st->opt |= 1 << OPTION_N_FDIV;
+          } else if(!strcmp(argv[i], "FMUL")) {
+            st->opt |= 1 << OPTION_N_FMUL;
+          } else if(!strcmp(argv[i], "FNEG")) {
+            st->opt |= 1 << OPTION_N_FNEG;
+          } else if(!strcmp(argv[i], "FSQRT")) {
+            st->opt |= 1 << OPTION_N_FSQRT;
+          } else if(!strcmp(argv[i], "FSUB")) {
+            st->opt |= 1 << OPTION_N_FSUB;
+          } else {
+            fprintf(stderr, "zsim: option format error\n");
+            print_usage();
+            return 1;
+          }
+        }
+        jbrk = 1;
         break;
       case 'r':
         st->opt |= 1 << OPTION_R;
