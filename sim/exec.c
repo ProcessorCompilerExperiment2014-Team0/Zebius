@@ -223,7 +223,7 @@ void i_fmov_s_st(state_t *st, int m, int n) {
 }
 
 void i_fadd(state_t *st, int m, int n) {
-  if(st->opt >> OPTION_N & 1) {
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FADD & 1)) {
     st->fr[n].f += st->fr[m].f;
   } else {
     st->fr[n].u = fadd(st->fr[n].u, st->fr[m].u);
@@ -253,7 +253,7 @@ void i_fcmp_gt(state_t *st, int m, int n) {
 }
 
 void i_fdiv(state_t *st, int m, int n) {
-  if(st->opt >> OPTION_N & 1) {
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FDIV & 1)) {
     st->fr[n].f /= st->fr[m].f;
   } else {
     st->fr[n].u = fmul(st->fr[n].u, finv(st->fr[m].u));
@@ -263,7 +263,7 @@ void i_fdiv(state_t *st, int m, int n) {
 }
 
 void i_fmul(state_t *st, int m, int n) {
-  if(st->opt >> OPTION_N & 1) {
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FMUL & 1)) {
     st->fr[n].f *= st->fr[m].f;
   } else {
     st->fr[n].u = fmul(st->fr[n].u, st->fr[m].u);
@@ -273,7 +273,7 @@ void i_fmul(state_t *st, int m, int n) {
 }
 
 void i_fneg(state_t *st, int n) {
-  if(st->opt >> OPTION_N & 1) {
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FNEG & 1)) {
     st->fr[n].f = -st->fr[n].f;
   } else {
     st->fr[n].u = fneg(st->fr[n].u);
@@ -283,7 +283,7 @@ void i_fneg(state_t *st, int n) {
 }
 
 void i_fsqrt(state_t *st, int n) {
-  if(st->opt >> OPTION_N & 1) {
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FSQRT & 1)) {
     st->fr[n].f = sqrtf(st->fr[n].f);
   } else {
     st->fr[n].u = fsqrt(st->fr[n].u);
@@ -293,7 +293,7 @@ void i_fsqrt(state_t *st, int n) {
 }
 
 void i_fsub(state_t *st, int m, int n) {
-  if(st->opt >> OPTION_N & 1) {
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FSUB & 1)) {
     st->fr[n].f -= st->fr[m].f;
   } else {
     st->fr[n].u = fsub(st->fr[n].u, st->fr[m].u);
