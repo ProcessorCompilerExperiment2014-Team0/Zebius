@@ -45,7 +45,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.fpu_common_p.all;
 use work.fadd_p.all;
+use work.fcmp_p.all;
 use work.fdiv_p.all;
 use work.fneg_p.all;
 use work.fmul_p.all;
@@ -118,8 +120,8 @@ begin
       when FPU_INST_DIV => dout.o <= unsigned(div_s);
       when FPU_INST_MUL => dout.o <= unsigned(mul_s);
       when FPU_INST_NEG => dout.o <= unsigned(neg_s);
-      when FPU_INST_EQ => assert false report "FCMP/EQ is not implemented" severity error;
-      when FPU_INST_GT => assert false report "FCMP/GT is not implemented" severity error;
+      when FPU_INST_EQ => dout.o <= fcmp_eq(din.i1, din.i2);
+      when FPU_INST_GT => dout.o <= fcmp_gt(din.i1, din.i2);
       when FPU_INST_SQRT => dout.o <= unsigned(sqrt_s);
       when FPU_INST_ITOF => assert false report "ITOF is not implemented" severity error;
       when FPU_INST_FTOI => assert false report "FTOI is not implemented" severity error;
