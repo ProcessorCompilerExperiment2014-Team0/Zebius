@@ -73,7 +73,7 @@ void print_options() {
           "  -m        Show addresses and values in every memory access\n"
           "  -w        Output in detail text form in WRITE instructions\n"
           "            (if not designated, output in binary)\n"
-          "  -n        Use native operations in floating-point instructions\n"
+          "  -n <inst> Use native operations in floating-point instructions\n"
           "  -l <n>    Stop execution in at most n instructions\n");
 }
 
