@@ -42,18 +42,23 @@ end blockram;
 architecture syn of blockram is
   type ram_type is array (255 downto 0) of unsigned(31 downto 0);
   signal RAM: ram_type := (
-    0 => x"E101E000", -- MOV     #0, R0    ;; .start : MOV     #1, R1
-    1 => x"E303E20A", -- MOV     #10, R2 : MOV     #3, R3
-    2 => x"442DE401", -- MOV     #1, R4 : SHLD    R2, R4
-    3 => x"66076543", -- MOV     R4, R5 : NOT     R0, R6
-    4 => x"0901E800", -- MOV     #0, R8 : READ    R9    ;; .loop
-    5 => x"3030389C", -- ADD     R9, R8 : CMP/EQ  R3, R0
-    6 => x"481D8902", -- BT      .write : SHLD    R1, R8
-    7 => x"AFF873FF", -- ADD     #-1, R3 : BRA     .loop
-    8 => x"89033960", -- CMP/EQ  R6, R9    ;; .write : BT      .run
-    9 => x"75042592", -- MOV.L   R9, @R5 : ADD     #4, R5
-    10 => x"AFF2E303", -- MOV     #3, R3 : BRA     .loop
-    11 => x"0000442B", -- JMP     @R4    ;; .run
+    0 => x"E10AE001", -- MOV     #1, R0    ;; .start : MOV     #10, R1
+    1 => x"E100401D", -- SHLD    R1, R0 : MOV     #0, R1
+    2 => x"E308E204", -- MOV     #4, R2 : MOV     #8, R3
+    3 => x"E6006403", -- MOV     R0, R4 : MOV     #0, R6
+    4 => x"3287E800", -- MOV     #0, R8 : CMP/GT  R8, R2    ;; .read_length
+    5 => x"05018B04", -- BF      .read_program : READ    R5
+    6 => x"265B463D", -- SHLD    R3, R6 : OR      R5, R6
+    7 => x"AFF87801", -- ADD     #1, R8 : BRA     .read_length
+    8 => x"8B0E3617", -- CMP/GT  R1, R6    ;; .read_program : BF      .run_program
+    9 => x"E700E800", -- MOV     #0, R8 : MOV     #0, R7
+    10 => x"3287E900", -- MOV     #0, R9 : CMP/GT  R8, R2    ;; .read_data
+    11 => x"05018B05", -- BF      .store_data : READ    R5
+    12 => x"275B459D", -- SHLD    R9, R5 : OR      R5, R7
+    13 => x"78017908", -- ADD     #8, R9 : ADD     #1, R8
+    14 => x"2472AFF7", -- BRA     .read_data : MOV.L   R7, @R4    ;; .store_data
+    15 => x"76FC7404", -- ADD     #4, R4 : ADD     #-4, R6
+    16 => x"402BAFEE", -- BRA     .read_program : JMP     @R0    ;; .run_program
     others => x"00000000");
 begin
 
