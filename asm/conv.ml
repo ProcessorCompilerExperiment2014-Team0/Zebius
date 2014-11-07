@@ -91,7 +91,9 @@ let check_immd len sign = function
   | I_Hex n -> check_unsigned len n
 
 let rec align tbl n = function
-  | [] -> []
+  | [] ->
+    if n mod 2 = 0 then []
+    else ([],n,M_AND,[A_R 0; A_R 0])::align tbl (n+1) []
   | (lbl,m,args)::is ->
     List.iter
       (fun l -> if Hashtbl.mem tbl l
