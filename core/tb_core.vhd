@@ -73,7 +73,7 @@ begin
 
   core : zebius_core
     generic map (
-      enable_log => false)
+      enable_log => true)
     port map (
       clk => clk,
       ci  => ci,

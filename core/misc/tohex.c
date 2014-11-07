@@ -9,7 +9,8 @@ main()
 
 	while(scanf("%c", &c) != -1)
 	{
-		printf("%c%c\n", hexchar[c>>4], hexchar[c&15]);
+		unsigned u = c;
+		printf("%c%c\n", hexchar[(u>>4)&15], hexchar[u&15]);
 	}
 
 	return 0;

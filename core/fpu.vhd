@@ -53,6 +53,8 @@ use work.fneg_p.all;
 use work.fmul_p.all;
 use work.fsqrt_p.all;
 use work.fsub_p.all;
+use work.ftoi_p.all;
+use work.itof_p.all;
 
 use work.zebius_type_p.all;
 use work.zebius_fpu_p.all;
@@ -123,8 +125,8 @@ begin
       when FPU_INST_EQ => dout.o <= fcmp_eq(din.i1, din.i2);
       when FPU_INST_GT => dout.o <= fcmp_gt(din.i1, din.i2);
       when FPU_INST_SQRT => dout.o <= unsigned(sqrt_s);
-      when FPU_INST_ITOF => assert false report "ITOF is not implemented" severity error;
-      when FPU_INST_FTOI => assert false report "FTOI is not implemented" severity error;
+      when FPU_INST_ITOF => dout.o <= itof(din.i1);
+      when FPU_INST_FTOI => dout.o <= ftoi(din.i1);
       when FPU_INST_NOP => dout.o <= (others => '0');
     end case;
   end process;

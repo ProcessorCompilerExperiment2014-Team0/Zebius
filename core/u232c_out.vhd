@@ -73,7 +73,7 @@ architecture blackbox of u232c_out is
     sendbuf => (others => '1'),
     state => "1111");
 
-  file ofile : text open write_mode is "output.txt";
+  file ofile : text open write_mode is "output";
 begin
 
   cobinational: process(r, din)

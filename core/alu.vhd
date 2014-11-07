@@ -82,7 +82,7 @@ architecture behavior of zebius_alu is
     if signed(a) > 0 then
       c := shift_left(b, to_integer(a(4 downto 0)));
     elsif a(4 downto 0) = "00000" then
-      c := to_unsigned(0, 32);
+      c := b;
     else
       c := shift_right(b, to_integer(-signed(a) and x"001f") + 1);
     end if;

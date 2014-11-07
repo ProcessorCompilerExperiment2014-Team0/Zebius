@@ -190,6 +190,14 @@ begin
             v.sin_data := ci.sin.data;
 
             v.state := next_state(v.state, v.mode);
+
+            if enable_log then
+              write(l, string'("read into R"));
+              write(l, v.wr_idx-16);
+              write(l, string'(": read: value = 000000"));
+              hwrite(l, std_logic_vector(v.sin_data));
+              writeline(log, l);
+            end if;
           end if;
 
         when CORE_OUTPUT =>
