@@ -4,7 +4,7 @@ LD = gcc
 LDFLAGS = -lm
 TARG = zsim
 
-FPUS = def.o fadd.o fsub.o fmul.o fneg.o finv.o fsqrt.o
+FPUS = def.o fadd.o fsub.o fmul.o fneg.o finv.o fsqrt.o ftrc.o itof.o
 
 all: $(TARG)
 

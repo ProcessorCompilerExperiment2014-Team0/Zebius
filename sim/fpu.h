@@ -9,5 +9,7 @@ uint32_t fmul(uint32_t, uint32_t);
 uint32_t fneg(uint32_t);
 uint32_t finv(uint32_t);
 uint32_t fsqrt(uint32_t);
+uint32_t ftrc(uint32_t);
+uint32_t itof(uint32_t);
 
 #endif

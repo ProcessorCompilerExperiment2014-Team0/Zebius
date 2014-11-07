@@ -174,6 +174,10 @@ int set_option(int argc, char **argv, state_t *st) {
             st->opt |= 1 << OPTION_N_FSQRT;
           } else if(!strcmp(argv[i], "FSUB")) {
             st->opt |= 1 << OPTION_N_FSUB;
+          } else if(!strcmp(argv[i], "FTRC")) {
+            st->opt |= 1 << OPTION_N_FTRC;
+          } else if(!strcmp(argv[i], "FLOAT")) {
+            st->opt |= 1 << OPTION_N_FLOAT;
           } else {
             fprintf(stderr, "zsim: option format error\n");
             print_usage();

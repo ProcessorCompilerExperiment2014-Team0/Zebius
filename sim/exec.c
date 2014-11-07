@@ -366,13 +366,21 @@ void i_fsts(state_t *st, int n) {
 }
 
 void i_ftrc(state_t *st, int m) {
-  st->fpul.i = (int)st->fr[m].f;
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FTRC & 1)) {
+    st->fpul.i = (int)st->fr[m].f;
+  } else {
+    st->fpul.u = ftrc(st->fr[m].u);
+  }
   st->i_stat[I_FTRC]++;
   inc_pc(st);
 }
 
 void i_float(state_t *st, int n) {
-  st->fr[n].f = (float)st->fpul.i;
+  if((st->opt >> OPTION_N & 1) || (st->opt >> OPTION_N_FLOAT & 1)) {
+    st->fr[n].f = (float)st->fpul.i;
+  } else {
+    st->fr[n].u = itof(st->fpul.u);
+  }
   st->i_stat[I_FLOAT]++;
   inc_pc(st);
 }

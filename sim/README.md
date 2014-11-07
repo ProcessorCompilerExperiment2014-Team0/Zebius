@@ -80,3 +80,5 @@ FRn xxxxxxxx
   * FNEG
   * FSQRT
   * FSUB
+  * FTRC
+  * FLOAT
