@@ -87,7 +87,7 @@ begin
   div: fdiv port map (
     a => a,
     b => b,
-    s => sub_s);
+    s => div_s);
 
   mul: fmul port map (
     a => a,
