@@ -320,9 +320,15 @@ void i_bt(state_t *st, int disp) {
   st->i_stat[I_BT]++;
 }
 
-void i_bra(state_t *st, int disp) {
-  st->pc.i += extend(disp, 12)*2 + 4;
+/* halt if self jump */
+int i_bra(state_t *st, int disp) {
+  int d = extend(disp, 12)*2 + 4;
   st->i_stat[I_BRA]++;
+  if(!d) {
+    return 1;
+  }
+  st->pc.i += d;
+  return 0;
 }
 
 void i_jmp(state_t *st, int n) {
@@ -435,7 +441,9 @@ int exec_inst(state_t *st) {
     }
   } else if(opcode == 0xA) {    /* 4,12 form */
     int param = 0xFFF & inst;
-    i_bra(st, param);           /* BRA */
+    if(i_bra(st, param)) {      /* BRA */
+      return 1;
+    }
   } else {                      /* 4,4,4,4 form */
     int param[3];
     int i;
@@ -638,7 +646,7 @@ void run(state_t *st, int noi) {
     if(st->opt >> OPTION_R & 1) {
       show_status_honly(st);
     }
-    if(exec_inst(st) < 0) break;
+    if(exec_inst(st)) break;
     st->i_count++;
   }
 }
