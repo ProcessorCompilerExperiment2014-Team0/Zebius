@@ -186,6 +186,8 @@ begin
 
         when CORE_INPUT =>
           if ci.sin.id /= v.sin_id then
+            assert next_u232c_in_id(v.sin_id) = ci.sin.id report "input value drop" severity warning;
+
             v.sin_id := ci.sin.id;
             v.sin_data := ci.sin.data;
 
