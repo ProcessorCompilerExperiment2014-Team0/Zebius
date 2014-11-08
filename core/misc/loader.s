@@ -40,4 +40,9 @@
 		ADD #-4,R6
 		BRA .read_program
 .run_program
+		MOV.L .exit_code,R7
+		MOV.L R7,@R4
 		JMP @R0
+		.align
+.exit_code
+		.data.l #45054 			;affe

@@ -58,7 +58,9 @@ architecture syn of blockram is
     13 => x"78017908", -- ADD     #8, R9 : ADD     #1, R8
     14 => x"2472AFF7", -- BRA     .read_data : MOV.L   R7, @R4    ;; .store_data
     15 => x"76FC7404", -- ADD     #4, R4 : ADD     #-4, R6
-    16 => x"402BAFEE", -- BRA     .read_program : JMP     @R0    ;; .run_program
+    16 => x"9701AFEE", -- BRA     .read_program : MOV.L   .exit_code, R7    ;; .run_program
+    17 => x"402B2472", -- MOV.L   R7, @R4 : JMP     @R0
+    18 => x"0000AFFE", -- .data.l #45054    ;; .exit_code
     others => x"00000000");
 begin
 
