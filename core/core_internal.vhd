@@ -715,7 +715,7 @@ package body zebius_core_internal_p is
       v.wr_src := WR_FPU;
       v.wr_idx := n+32;
 
-      fpu.inst <= FPU_INST_FTOI;
+      fpu.inst <= FPU_INST_ITOF;
       fpu.i1 <= v.reg_file(4);
       fpu.i2 <= x"00000000";
 

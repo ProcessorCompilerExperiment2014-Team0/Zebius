@@ -110,7 +110,7 @@ begin
     s => sub_s);
 
 
-  process(din, add_s, sub_s, neg_s, sqrt_s)
+  process(din, add_s, sub_s, mul_s, neg_s, sqrt_s, div_s)
   begin
 
     a <= std_logic_vector(din.i1);
