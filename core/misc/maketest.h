@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #ifndef __MAKETEST_H__
 #define __MAKETEST_H__
 
