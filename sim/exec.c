@@ -67,18 +67,19 @@ void i_write(state_t *st, int n) {
   inc_pc(st);
 }
 
-void i_read(state_t *st, int n) {
+int i_read(state_t *st, int n) {
+  st->i_stat[I_READ]++;
   int v;
   fprintf(stderr, "read into R%d: ", n);
   v = getchar();
   if(v == EOF) {
-    perror("read");
-    return;
+    fprintf(stderr, "ERROR: read: EOF\n");
+    return -1;
   }
   st->gpr[n].i = v & 0xFF;
   fprintf(stderr, "read: value = %08X\n", st->gpr[n].i);
-  st->i_stat[I_READ]++;
   inc_pc(st);
+  return 0;
 }
 
 void i_mov_i(state_t *st, int imm, int n) {
@@ -457,7 +458,9 @@ int exec_inst(state_t *st) {
         i_write(st, param[0]);
         break;
       case 0x1:
-        i_read(st, param[0]);   /* READ */
+        if(i_read(st, param[0])) { /* READ */
+          return -1;
+        }
         break;
       case 0xA:                 /* STS */
         switch(param[1]) {
