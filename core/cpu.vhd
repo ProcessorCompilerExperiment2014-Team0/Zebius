@@ -40,12 +40,13 @@ end cpu;
 
 architecture behavior of cpu is
 
-  constant wtime : unsigned(15 downto 0) := x"1b00";
+  constant wtime : unsigned(15 downto 0) := x"0d80";
 
   signal ci  : core_in_t;
   signal co  : core_out_t;
 
-  signal clk,iclk: std_logic;
+  signal clk, iclk, dclk, iclkfd, clkfd: std_logic;
+  signal rst: std_logic := '0';
 
 begin
   ib: ibufg
@@ -53,10 +54,34 @@ begin
     i => mclk1,
     o => iclk);
 
-  bg: bufg
-  port map (
-    i => iclk,
+  dcm: dcm_base
+    generic map (
+      clk_feedback => "1X",
+      clkdv_divide => 2.0,
+      clkdv_divide => false,
+      duty_cycle_correction => true)
+    port map (
+      rst => rst,
+      clkin => iclk,
+      clkfb => clkfd,
+      clk0 => iclkfd,
+      clk90 => open,
+      clk180 => open,
+      clk270 => open,
+      clk2x => open,
+      clk2x180 => open,
+      clkdv => dclk,
+      clkfx => open,
+      clkfx180 => open);
+
+  bg: bufg port map (
+    i => iclkfd,
+    o => clkfd);
+
+  ss: bufg port map (
+    i => dclk,
     o => clk);
+
 
   core : zebius_core
     port map ( clk => clk,
