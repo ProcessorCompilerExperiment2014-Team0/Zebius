@@ -585,7 +585,7 @@ package body zebius_core_internal_p is
 
       v.mode := MODE_ARITH;
       v.wr_src := WR_FPU;
-      v.wr_idx := n+32;
+      v.wr_idx := 3;
 
       fpu.inst <= FPU_INST_EQ;
       fpu.i1 <= v.reg_file(n+32);
@@ -598,7 +598,7 @@ package body zebius_core_internal_p is
 
       v.mode := MODE_ARITH;
       v.wr_src := WR_FPU;
-      v.wr_idx := n+32;
+      v.wr_idx := 3;
 
       fpu.inst <= FPU_INST_GT;
       fpu.i1 <= v.reg_file(n+32);
