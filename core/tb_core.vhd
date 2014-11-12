@@ -29,7 +29,7 @@ architecture testbench of tb_core is
   signal data : unsigned(7 downto 0) := (others => '0');
 
 
-  constant wtime : unsigned(15 downto 0) := x"0010";
+  constant wtime : unsigned(15 downto 0) := x"001f";
 
   signal clk : std_logic;
   signal ci  : core_in_t;
@@ -86,6 +86,7 @@ begin
 
   fpu : zebius_fpu
     port map (
+      clk  => clk,
       din  => co.fpu,
       dout => ci.fpu);
 

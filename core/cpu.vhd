@@ -69,6 +69,7 @@ begin
 
   fpu : zebius_fpu
     port map (
+      clk  => clk,
       din  => co.fpu,
       dout => ci.fpu);
 

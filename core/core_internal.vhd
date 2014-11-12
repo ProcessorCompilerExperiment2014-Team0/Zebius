@@ -43,6 +43,7 @@ package zebius_core_internal_p is
 
     MODE_FETCH_INST,
     MODE_ARITH,
+    MODE_FARITH,
     MODE_INPUT,
     MODE_OUTPUT,
     MODE_MOV_REG,
@@ -138,6 +139,16 @@ package body zebius_core_internal_p is
               when others =>
                 assert false report "invalid core state" severity ERROR;
             end case;
+
+          when MODE_FARITH =>
+            case state is
+              when CORE_DECODE_INST => return CORE_WAIT;
+              when CORE_WAIT => return CORE_WRITE_BACK;
+              when CORE_WRITE_BACK => return CORE_UPDATE_PC;
+              when others =>
+                assert false report "invalid core state" severity ERROR;
+            end case;
+
 
           when MODE_INPUT =>
             case state is
@@ -605,17 +616,18 @@ package body zebius_core_internal_p is
       fpu.i2 <= v.reg_file(m+32);
 
     elsif inst.a = "1111" and inst.d = "0011" then
-      -- FDIV FRm FRn
+      -- FINV FRm FRn
       n := to_integer(inst.b);
       m := to_integer(inst.c);
 
-      v.mode := MODE_ARITH;
+      v.mode := MODE_FARITH;
       v.wr_src := WR_FPU;
       v.wr_idx := n+32;
+      v.wtime := 0;
 
-      fpu.inst <= FPU_INST_DIV;
-      fpu.i1 <= v.reg_file(n+32);
-      fpu.i2 <= v.reg_file(m+32);
+      fpu.inst <= FPU_INST_INV;
+      fpu.i1 <= v.reg_file(m+32);
+      fpu.i2 <= (others => '0');
 
     elsif inst.a = "1111" and inst.d = "0010" then
       -- FMUL FRm FRn

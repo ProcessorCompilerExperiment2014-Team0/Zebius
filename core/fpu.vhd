@@ -12,7 +12,7 @@ package zebius_fpu_p is
 
     FPU_INST_ADD,
     FPU_INST_SUB,
-    FPU_INST_DIV,
+    FPU_INST_INV,
     FPU_INST_MUL,
     FPU_INST_NEG,
     FPU_INST_EQ,
@@ -32,8 +32,10 @@ package zebius_fpu_p is
   end record;
 
   component zebius_fpu
-    port ( din  : in  fpu_in_t;
-           dout : out fpu_out_t);
+    port (
+      clk: in std_logic;
+      din: in fpu_in_t;
+      dout : out fpu_out_t);
   end component;
 
 end zebius_fpu_p;
@@ -48,7 +50,7 @@ library work;
 use work.fpu_common_p.all;
 use work.fadd_p.all;
 use work.fcmp_p.all;
-use work.fdiv_p.all;
+use work.finv_p.all;
 use work.fneg_p.all;
 use work.fmul_p.all;
 use work.fsqrt_p.all;
@@ -62,7 +64,8 @@ use work.zebius_fpu_p.all;
 
 entity zebius_fpu is
   port (
-    din  : in  fpu_in_t;
+    clk : in std_logic;
+    din : in  fpu_in_t;
     dout : out fpu_out_t);
 end zebius_fpu;
 
@@ -72,7 +75,7 @@ architecture behavior of zebius_fpu is
   signal a: std_logic_vector(31 downto 0) := (others => '0');
   signal b: std_logic_vector(31 downto 0) := (others => '0');
   signal add_s: std_logic_vector(31 downto 0);
-  signal div_s: std_logic_vector(31 downto 0);
+  signal inv_s: std_logic_vector(31 downto 0);
   signal mul_s: std_logic_vector(31 downto 0);
   signal neg_s: std_logic_vector(31 downto 0);
   signal sqrt_s: std_logic_vector(31 downto 0);
@@ -86,10 +89,10 @@ begin
     b => b,
     s => add_s);
 
-  div: fdiv port map (
+  inv: finv port map (
+    clk => clk,
     a => a,
-    b => b,
-    s => div_s);
+    s => inv_s);
 
   mul: fmul port map (
     a => a,
@@ -100,9 +103,9 @@ begin
     a => a,
     s => neg_s);
 
-  sqrt: fsqrt port map (
-    a => a,
-    s => sqrt_s);
+--  sqrt: fsqrt port map (
+--    a => a,
+--    s => sqrt_s);
 
   sub: fsub port map (
     a => a,
@@ -110,7 +113,7 @@ begin
     s => sub_s);
 
 
-  process(din, add_s, sub_s, mul_s, neg_s, sqrt_s, div_s)
+  process(din, add_s, sub_s, mul_s, neg_s, sqrt_s, inv_s)
   begin
 
     a <= std_logic_vector(din.i1);
@@ -119,7 +122,7 @@ begin
     case din.inst is
       when FPU_INST_ADD => dout.o <= unsigned(add_s);
       when FPU_INST_SUB => dout.o <= unsigned(sub_s);
-      when FPU_INST_DIV => dout.o <= unsigned(div_s);
+      when FPU_INST_INV => dout.o <= unsigned(inv_s);
       when FPU_INST_MUL => dout.o <= unsigned(mul_s);
       when FPU_INST_NEG => dout.o <= unsigned(neg_s);
       when FPU_INST_EQ => dout.o <= fcmp_eq(din.i1, din.i2);
