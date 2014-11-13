@@ -61,7 +61,7 @@ architecture behavior of zebius_alu is
   begin return a+b; end;
 
   function alu_sub ( a: reg_data_t; b: reg_data_t) return reg_data_t is
-  begin return b-a; end;
+  begin return a-b; end;
 
   function alu_and ( a: reg_data_t; b: reg_data_t) return reg_data_t is
   begin return a and b; end;
