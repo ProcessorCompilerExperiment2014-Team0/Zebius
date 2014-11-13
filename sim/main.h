@@ -54,6 +54,9 @@ typedef struct {
   long long i_count;
   long long i_limit;
   long long i_stat[I_SENTINEL];
+
+  long long last_read;
+  long long read_interval;
 } state_t;
 
 void show_status(state_t *st);

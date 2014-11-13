@@ -120,6 +120,8 @@ int set_option(int argc, char **argv, state_t *st) {
   st->opt = 0;
   st->i_count = 0LL;
   st->i_limit = -1LL;
+  st->last_read = 0x7FFFFFFFFFFFFFFFLL;
+  st->read_interval = 0LL;
   for(i=0; i<I_SENTINEL; i++) {
     st->i_stat[i] = 0;
   }
@@ -285,6 +287,7 @@ void show_status(state_t *st) {
   for(i=0; i<I_SENTINEL; i++) {
     fprintf(stderr, "%s       : %lld\n", inst_name[i], st->i_stat[i]);
   }
+  fprintf(stderr, "maximum read interval      : %lld\n", st->read_interval);
 }
 
 void show_status_honly(state_t *st) {
