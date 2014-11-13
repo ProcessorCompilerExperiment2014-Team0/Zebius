@@ -90,10 +90,10 @@ let check_immd len sign = function
     else check_unsigned len n
   | I_Hex n -> check_unsigned len n
 
-let rec align tbl n = function
+let rec align res tbl n = function
   | [] ->
-    if n mod 2 = 0 then []
-    else ([],n,M_AND,[A_R 0; A_R 0])::align tbl (n+1) []
+    if n mod 2 = 0 then res
+    else ([],n,M_AND,[A_R 0; A_R 0])::res
   | (lbl,m,args)::is ->
     List.iter
       (fun l -> if Hashtbl.mem tbl l
@@ -101,10 +101,10 @@ let rec align tbl n = function
         else Hashtbl.add tbl l n) lbl;
     match m with
     | M_ALIGN ->
-      if (n land 1) = 0 then align tbl n is
-      else (lbl,n,M_AND,[A_R 0; A_R 0])::align tbl (n+1) is
-    | M_DATA_L -> (lbl,n,m,args)::align tbl (n+2) is
-    | _ -> (lbl,n,m,args)::align tbl (n+1) is
+      if (n land 1) = 0 then align res tbl n is
+      else align ((lbl,n,M_AND,[A_R 0; A_R 0])::res) tbl (n+1) is
+    | M_DATA_L -> align ((lbl,n,m,args)::res) tbl (n+2) is
+    | _ -> align ((lbl,n,m,args)::res) tbl (n+1) is
 
 let enc_int1 a =
   [a land 0xFF;

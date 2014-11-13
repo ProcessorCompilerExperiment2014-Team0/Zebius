@@ -69,6 +69,10 @@ void i_write(state_t *st, int n) {
 
 int i_read(state_t *st, int n) {
   st->i_stat[I_READ]++;
+  if(st->i_count - st->last_read > st->read_interval) {
+    st->read_interval = st->i_count - st->last_read;
+  }
+  st->last_read = st->i_count;
   int v;
   fprintf(stderr, "read into R%d: ", n);
   v = getchar();

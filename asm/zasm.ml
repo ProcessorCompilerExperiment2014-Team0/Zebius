@@ -5,7 +5,8 @@ open Conv
 
 exception Option_format
 
-type opt = {mutable vhdl: bool; mutable offset: int}
+type opt = {mutable vhdl: bool; mutable offset: int;
+           mutable ofile: string}
 
 let write ot tbl asm =
   List.iter (output_byte ot) (List.concat (List.map (Conv.encode tbl) asm))
@@ -13,17 +14,24 @@ let write ot tbl asm =
 let print_options () =
   prerr_endline "Option format error";
   prerr_endline "Usage: zasm [input file] [options]";
-  prerr_endline "  -v     Output for vhdl";
-  prerr_endline "  -s <n> Set offset as n words"
+  prerr_endline "  -v            Output for vhdl";
+  prerr_endline "  -s <n>        Set offset as n words";
+  prerr_endline "  -o <filename> Set output file"
 
 let rec get_option n opt =
-  if n < Array.length Sys.argv
+  let len = Array.length Sys.argv in
+  if n < len
   then match Sys.argv.(n) with
   | "-v" -> opt.vhdl <- true;
     get_option (n+1) opt
   | "-s" ->
-    if (n+1) < Array.length Sys.argv
+    if (n+1) < len
     then opt.offset <- int_of_string Sys.argv.(n+1)
+    else raise Option_format;
+    get_option (n+2) opt
+  | "-o" ->
+    if (n+1) < len
+    then opt.ofile <- Sys.argv.(n+1)
     else raise Option_format;
     get_option (n+2) opt
   | _ -> raise Option_format
@@ -38,11 +46,11 @@ let main () =
       let lexbuf = Lexing.from_channel input in
       let asm = insts token lexbuf in
       let ofile = String.sub Sys.argv.(1) 0 (String.length Sys.argv.(1) - 2) in
-      let output = open_out_bin ofile in
-      let opt = get_option 2 {vhdl = false; offset = 0} in
+      let opt = get_option 2 {vhdl = false; offset = 0; ofile = ofile} in
+      let output = open_out_bin opt.ofile in
       let tbl = Hashtbl.create (List.length asm) in
       try
-        let asm' = align tbl (opt.offset * 2) asm in
+        let asm' = List.rev (align [] tbl (opt.offset * 2) asm) in
         write output tbl asm';
         if opt.vhdl
         then show_vhdl stdout tbl opt.offset asm'
