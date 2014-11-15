@@ -24,12 +24,13 @@ end tb_core;
 architecture testbench of tb_core is
 
   file ifile : text open read_mode is "input";
+  signal fin : boolean := false;
   signal cnt : unsigned(15 downto 0) := (others => '0');
   signal idx : integer range -1 to 8 := 8;
   signal data : unsigned(7 downto 0) := (others => '0');
 
 
-  constant wtime : unsigned(15 downto 0) := x"0010";
+  constant wtime : unsigned(15 downto 0) := x"0008";
 
   signal clk : std_logic;
   signal ci  : core_in_t;
@@ -42,6 +43,8 @@ architecture testbench of tb_core is
       inst => FPU_INST_NOP,
       i1 => (others => '0'),
       i2 => (others => '0')),
+    sin => (
+      rden => '0'),
     sout => (
       data => (others => '0'),
       go => '0'),
@@ -95,6 +98,7 @@ begin
     port map (
       clk => clk,
       rx => rx,
+		din => co.sin,
       dout => ci.sin);
 
   sout : u232c_out
@@ -180,27 +184,33 @@ begin
     variable byte : std_logic_vector(7 downto 0);
   begin
     if rising_edge(clk) then
-      if cnt = 0 then
-        cnt <= wtime;
-
-        case idx is
-          when -1 =>
-            rx <= '0';
-            idx <= 0;
-          when 8 =>
-            if not endfile(ifile) then
-              rx <= '1';
-              idx <= -1;
-              readline(ifile, l);
-              hread(l, byte);
-              data <= unsigned(byte);
-            end if;
-          when others =>
-            rx <= data(idx);
-            idx <= idx+1;
-        end case;
+      if fin then
+        rx <= '1';
       else
-        cnt <= cnt - 1;
+        if cnt = 0 then
+          cnt <= wtime;
+
+          case idx is
+            when -1 =>
+              rx <= '0';
+              idx <= 0;
+            when 8 =>
+              rx <= '1';
+              if not endfile(ifile) then
+                idx <= -1;
+                readline(ifile, l);
+                hread(l, byte);
+              else
+                fin <= true;
+              end if;
+              data <= unsigned(byte);
+            when others =>
+              rx <= data(idx);
+              idx <= idx+1;
+          end case;
+        else
+          cnt <= cnt - 1;
+        end if;
       end if;
     end if;
   end process;

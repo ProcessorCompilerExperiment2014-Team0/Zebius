@@ -23,6 +23,7 @@ package zebius_core_p is
   type core_out_t is record
     alu  : alu_in_t;
     fpu  : fpu_in_t;
+    sin  : u232c_in_in_t;
     sout : u232c_out_in_t;
     sram : sram_controller_in_t;
   end record;
@@ -82,8 +83,6 @@ architecture behavior of zebius_core is
     wr_src => WR_ALU,
     mem_data => (others => '0'),
     mem_dir => DIR_READ,
-    sin_id => U232C_IN_FIRST_ID,
-    sin_data => (others => '0'),
     sout_data => (others => '0'),
     wtime => 0,
     nextpc => PC_SEQ,
@@ -102,6 +101,7 @@ begin
       v := r;
 
       -- reset output
+      co.sin.rden <= '0';
       co.sout.go <= '0';
       co.sram.dir <= DIR_READ;
 
@@ -185,21 +185,12 @@ begin
           v.state := next_state(v.state, v.mode);
 
         when CORE_INPUT =>
-          if ci.sin.id /= v.sin_id then
-            assert next_u232c_in_id(v.sin_id) = ci.sin.id report "input value drop" severity warning;
+          if ci.sin.empty = '0' then
 
-            v.sin_id := ci.sin.id;
-            v.sin_data := ci.sin.data;
+            co.sin.rden <= '1';
 
             v.state := next_state(v.state, v.mode);
 
-            if enable_log then
-              write(l, string'("read into R"));
-              write(l, v.wr_idx-16);
-              write(l, string'(": read: value = 000000"));
-              hwrite(l, std_logic_vector(v.sin_data));
-              writeline(log, l);
-            end if;
           end if;
 
         when CORE_OUTPUT =>
@@ -219,7 +210,15 @@ begin
               v.reg_file(v.wr_idx) := ci.fpu.o;
 
             when WR_INPUT =>
-              v.reg_file(v.wr_idx) :=  resize(v.sin_data, 32);
+              v.reg_file(v.wr_idx) :=  resize(ci.sin.data, 32);
+
+              if enable_log then
+                write(l, string'("read into R"));
+                write(l, v.wr_idx-16);
+                write(l, string'(": read: value = "));
+                hwrite(l, std_logic_vector(v.reg_file(v.wr_idx)));
+                writeline(log, l);
+              end if;
 
             when WR_MEMORY =>
               v.reg_file(v.wr_idx) := ci.sram.data(31 downto 0);

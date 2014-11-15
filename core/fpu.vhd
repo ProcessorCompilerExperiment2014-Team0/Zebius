@@ -100,9 +100,9 @@ begin
     a => a,
     s => neg_s);
 
-  sqrt: fsqrt port map (
-    a => a,
-    s => sqrt_s);
+--  sqrt: fsqrt port map (
+--    a => a,
+--    s => sqrt_s);
 
   sub: fsub port map (
     a => a,

@@ -80,8 +80,6 @@ package zebius_core_internal_p is
     mem_data : sram_data_t;
     mem_dir : iodir_t;
     -- input
-    sin_id : u232c_in_id_t;
-    sin_data : unsigned(7 downto 0);
     -- output
     sout_data : unsigned(7 downto 0);
     -- wait
@@ -142,7 +140,8 @@ package body zebius_core_internal_p is
           when MODE_INPUT =>
             case state is
               when CORE_DECODE_INST => return CORE_INPUT;
-              when CORE_INPUT => return CORE_WRITE_BACK;
+              when CORE_INPUT => return CORE_WAIT;
+              when CORE_WAIT => return CORE_WRITE_BACK;
               when CORE_WRITE_BACK => return CORE_UPDATE_PC;
               when others =>
                 assert false report "invalid core state" severity ERROR;
@@ -233,6 +232,7 @@ package body zebius_core_internal_p is
       n := to_integer(inst.b);
 
       v.mode := MODE_INPUT;
+      v.wtime := 4;
       v.wr_idx := n+16;
       v.wr_src := WR_INPUT;
 
