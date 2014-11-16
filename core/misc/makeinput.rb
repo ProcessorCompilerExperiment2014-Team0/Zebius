@@ -15,6 +15,7 @@ data = if (ARGV.length == 2)
        end
 bin = code[0...-2]
 
+p "#$zasm #{code} -s 256"
 `#$zasm #{code} -s 256`
 size = File.size(bin);
 
