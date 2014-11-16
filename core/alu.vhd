@@ -77,6 +77,7 @@ architecture behavior of zebius_alu is
 
   function alu_shld ( a: reg_data_t; b: reg_data_t) return reg_data_t is
     variable c: reg_data_t;
+    variable tmp: reg_data_t;
   begin
 
     if signed(a) > 0 then
@@ -84,7 +85,8 @@ architecture behavior of zebius_alu is
     elsif a(4 downto 0) = "00000" then
       c := b;
     else
-      c := shift_right(b, to_integer(-signed(a) and x"001f") + 1);
+      tmp := unsigned(-signed(a));
+      c := shift_right(b, to_integer(tmp(4 downto 0)));
     end if;
 
     return c;
