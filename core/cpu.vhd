@@ -42,7 +42,7 @@ architecture behavior of cpu is
 
 --  constant wtime : unsigned(15 downto 0) := x"0d80";
   -- when 4800 and 33.33: 1ae8
-  constant wtime : unsigned(15 downto 0) := x"0d6d";
+  constant wtime : unsigned(15 downto 0) := x"0d80";
 
   signal ci  : core_in_t;
   signal co  : core_out_t;
