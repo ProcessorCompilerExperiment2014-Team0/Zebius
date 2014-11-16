@@ -93,18 +93,23 @@ architecture implementation of sram_controller is
     data => (others => '-'));
   signal bout : blockram_out_t;
 
+  type src_mem_t is (BRAM, SRAM);
+
   type ratch_t is record
-    -- common
-    word_align0, word_align1, word_align2 : boolean;
-    -- sram
-    data0, data1, data2 : sram_data_t;
-    dir0, dir1, dir2 : iodir_t;
-    -- blockram
-    be0, be1, be2 : boolean;
-    bdata1, bdata2 : unsigned(31 downto 0);
+    data1: sram_data_t;
+    src1, src2: src_mem_t;
+    dir1, dir2: iodir_t;
+    word_align1, word_align2: boolean;
   end record;
 
-  signal r, rin : ratch_t;
+  signal r : ratch_t := (
+    data1 => (others => 'X'),
+    src1 => BRAM,
+    src2 => BRAM,
+    dir1 => DIR_READ,
+    dir2 => DIR_READ,
+    word_align1 => false,
+    word_align2 => false);
 
 
   function is_blockram_addr (addr : sram_addr_t)
@@ -122,6 +127,7 @@ begin
 
   bin.en <= '1';
   bin.we <= '0';
+  bin.data <= (others => 'X');
 
   xe1   <= '0';
   e2a   <= '1';
@@ -132,95 +138,93 @@ begin
   zclkma(0) <= clk;
   zclkma(1) <= clk;
   adva  <= '0';
-  xft   <= '1';
+  xft   <= '0';
   zza   <= '0';
   xlbo  <= '1';
 
-  process (din, bout, r, zd, zdp)
-    variable v : ratch_t;
-    variable data : sram_data_t;
-  begin
-    v := r;
-    v.word_align0 := din.addr(1) = '1';
-
-    -- read/write operation
-    if is_blockram_addr(din.addr) then
-      assert din.dir = DIR_READ report "blockram is read-only" severity WARNING;
-      v.be0 := true;
-      bin.addr <= din.addr(9 downto 2);
-    else
-      v.be0 := false;
-      za <= std_logic_vector(din.addr(21 downto 2));
-
-      if din.dir = DIR_READ then
-        xwa <= '1';
-      else
-        xwa <= '0';
-      end if;
-
-      v.dir0 := din.dir;
-      v.data0 := din.data;
-    end if;
-
-    dout.data <= data;
-
-    -- process memory output
-    if v.be1 then
-      v.bdata1 := bout.data;
-    else
-      v.bdata1 := (others => '-');
-    end if;
-
-    if v.be2 then
-      data := "0000" & v.bdata2;
-    elsif v.dir2 = DIR_READ then
-      data := unsigned(zdp & zd);
-    else
-      data := (others => '-');
-    end if;
-
-    if v.word_align2 then
-      data := resize(data(31 downto 16), 36);
-    end if;
-
-    dout.data <= data;
-
-    rin <= v;
-  end process;
-
-
   process (clk)
-    variable v : ratch_t;
+    variable v: ratch_t;
+    variable d: sram_data_t;
   begin
     if rising_edge(clk) then
-      v := rin;
+      v := r;
 
-      v.be0 := false;
-      v.dir0 := DIR_READ;
-      v.data0 := (others => '-');
-      v.word_align0 := false;
-
-      v.word_align1 := rin.word_align0;
-      v.word_align2 := rin.word_align1;
-
-      -- blockram
-      v.be1 := rin.be0;
-      v.be2 := rin.be1;
-      v.bdata2 := rin.bdata1;
-
-      -- sram
-      v.data1 := rin.data0;
-      v.data2 := rin.data1;
-      v.dir1 := rin.dir0;
-      v.dir2 := rin.dir1;
-
-      if v.dir2 = DIR_READ then
-        zdp <= (others => 'Z');
-        zd <= (others => 'Z');
+      -- stage 1: decode input
+      if din.addr(1) = '1' then
+        v.word_align1 := true;
       else
-        zdp <= std_logic_vector(v.data2(35 downto 32));
-        zd <= std_logic_vector(v.data2(31 downto 0));
+        v.word_align1 := false;
       end if;
+
+      if is_blockram_addr(din.addr) then
+        assert din.dir = DIR_READ report "bram is read-only" severity warning;
+
+        v.src1 := BRAM;
+        v.dir1 := DIR_READ;
+        bin.addr <= din.addr(9 downto 2);
+
+        xwa <= '1';
+      else
+
+        v.src1 := SRAM;
+        za <= std_logic_vector(din.addr(21 downto 2));
+
+        case din.dir is
+          when DIR_READ =>
+            v.dir1 := DIR_READ;
+            xwa <= '1';
+
+          when DIR_WRITE =>
+            v.dir1 := DIR_WRITE;
+            v.data1 := din.data;
+            xwa <= '0';
+        end case;
+
+      end if;
+
+      -- stage 2: put data
+      case r.src1 is
+        when BRAM =>
+          null;
+
+        when SRAM =>
+
+          case r.dir1 is
+            when DIR_READ =>
+              zd <= (others => 'Z');
+              zdp <= (others => 'Z');
+
+            when DIR_WRITE =>
+              zd <= std_logic_vector(r.data1(31 downto 0));
+              zdp <= std_logic_vector(r.data1(35 downto 32));
+          end case;
+      end case;
+
+      -- stage 3: output read value
+
+      case r.src1 is
+        when BRAM =>
+          d := "0000" & bout.data;
+
+        when SRAM =>
+
+          if r.dir2 = DIR_READ then
+            d := unsigned(zdp & zd);
+          end if;
+      end case;
+
+      if r.dir2 = DIR_READ then
+        if r.word_align2 then
+          dout.data <= x"00000" & d(31 downto 16);
+        else
+          dout.data <= d;
+        end if;
+      end if;
+
+
+      v.src2 := r.src1;
+      v.dir2 := r.dir1;
+      v.word_align2 := r.word_align1;
 
       r <= v;
     end if;

@@ -264,7 +264,7 @@ package body zebius_core_internal_p is
       d := signed_resize(inst.c & inst.d, 32);
 
       v.mode := MODE_LOAD_DISP;
-      v.wtime := 1;
+      v.wtime := 2;
       v.wr_idx := n+16;
       v.wr_src := WR_MEMORY;
 
@@ -308,7 +308,7 @@ package body zebius_core_internal_p is
 
 
       v.mode := MODE_LOAD;
-      v.wtime := 1;
+      v.wtime := 2;
       v.wr_src := WR_MEMORY;
       v.wr_idx := n+16;
 
@@ -484,8 +484,7 @@ package body zebius_core_internal_p is
 
       alu.inst <= ALU_INST_INC_PC;
       alu.i1 <= v.reg_file(0);
-      alu
-        .i2 <= d;
+      alu.i2 <= d;
 
     elsif inst.a = "0100" and inst.c = "0010" and inst.d = "1011" then
       -- JMP @Rn
@@ -543,7 +542,7 @@ package body zebius_core_internal_p is
 
 
       v.mode := MODE_LOAD;
-      v.wtime := 1;
+      v.wtime := 2;
       v.wr_src := WR_MEMORY;
       v.wr_idx := n+32;
 

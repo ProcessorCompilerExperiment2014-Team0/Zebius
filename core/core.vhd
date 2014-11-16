@@ -121,7 +121,7 @@ begin
           co.sram.addr <= v.reg_file(0)(21 downto 0);
           co.sram.dir <= DIR_READ;
 
-          v.wtime := 1;
+          v.wtime := 2;
           v.state := next_state(v.state, v.mode);
 
         when CORE_DECODE_INST =>
