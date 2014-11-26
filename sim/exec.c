@@ -6,6 +6,7 @@
 #include "main.h"
 #include "exec.h"
 #include "fpu.h"
+#include "map.h"
 
 /* sign extend v as (len) bits integer */
 int extend(int v, int len) {
@@ -344,6 +345,9 @@ void i_jmp(state_t *st, int n) {
 void i_jsr(state_t *st, int n) {
   st->pr.i = st->pc.i + 4;
   st->pc.i = st->gpr[n].i;
+  if(st->opt >> OPTION_S & 1) {
+    (*lookup(&st->map, st->pc.i))++;
+  }
   st->i_stat[I_JSR]++;
 }
 

@@ -1,7 +1,9 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <stdio.h>
 #include <stdint.h>
+#include "map.h"
 
 #define NUM_OF_GPR 16
 #define NUM_OF_FR 16
@@ -9,7 +11,7 @@
 #define SIZE_OF_BLOCKRAM (1 << 10)
 
 enum Opt {
-  OPTION_D, OPTION_M, OPTION_W, OPTION_R, OPTION_N,
+  OPTION_D, OPTION_M, OPTION_W, OPTION_R, OPTION_S, OPTION_N,
   OPTION_N_FADD, OPTION_N_FDIV, OPTION_N_FMUL, OPTION_N_FNEG,
   OPTION_N_FSQRT, OPTION_N_FSUB, OPTION_N_FTRC, OPTION_N_FLOAT,
   OPTION_SENTINEL,
@@ -54,6 +56,9 @@ typedef struct {
   long long i_count;
   long long i_limit;
   long long i_stat[I_SENTINEL];
+
+  map_t map;
+  FILE *st_out;
 
   long long last_read;
   long long read_interval;

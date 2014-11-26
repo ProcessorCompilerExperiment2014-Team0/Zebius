@@ -8,6 +8,7 @@
 #include <string.h>
 #include "main.h"
 #include "exec.h"
+#include "map.h"
 
 #define LINE_LEN 128
 
@@ -120,6 +121,7 @@ int set_option(int argc, char **argv, state_t *st) {
   st->opt = 0;
   st->i_count = 0LL;
   st->i_limit = -1LL;
+  st->map.n = NULL;
   st->last_read = 0x7FFFFFFFFFFFFFFFLL;
   st->read_interval = 0LL;
   for(i=0; i<I_SENTINEL; i++) {
@@ -154,6 +156,18 @@ int set_option(int argc, char **argv, state_t *st) {
         break;
       case 'w':
         st->opt |= 1 << OPTION_W;
+        break;
+      case 's':
+        st->opt |= 1 << OPTION_S;
+        if(i+1 >= argc || argv[i+1][0] == '-') {
+          char buf[100];
+          strcpy(buf, argv[1]);
+          strcat(buf, ".log");
+          st->st_out = fopen(buf, "w");
+          break;
+        }
+        st->st_out = fopen(argv[++i], "w");
+        jbrk = 1;
         break;
       case 'n':
         if(i+1 >= argc || argv[i+1][0] == '-') {
@@ -288,6 +302,10 @@ void show_status(state_t *st) {
     fprintf(stderr, "%s       : %lld\n", inst_name[i], st->i_stat[i]);
   }
   fprintf(stderr, "maximum read interval      : %lld\n", st->read_interval);
+  if(st->opt >> OPTION_S) {
+    inspect(st->st_out, &st->map);
+    fclose(st->st_out);
+  }
 }
 
 void show_status_honly(state_t *st) {

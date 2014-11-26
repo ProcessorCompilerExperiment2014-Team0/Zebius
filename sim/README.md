@@ -65,6 +65,10 @@ FRn xxxxxxxx
 * -l <n>
   * 最大n命令で実行を終了する
     * nは十進数
+* -s <logfile>
+  * `JSR`命令のジャンプ先の統計を取り、<logfile>に出力する
+  * `asm/stat <assembly> <logfile>`でラベルと対応付けることができる
+  * 出力ファイル名を省略した場合は`機械語ファイル名.log`に出力
 
 ## READ/WRITEの仕様
 ### READ
