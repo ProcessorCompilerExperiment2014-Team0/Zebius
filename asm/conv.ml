@@ -142,6 +142,7 @@ let encode tbl (lbl,place,mn,args) =
       | (M_MOV, [A_R m; A_R n]) -> enc_int4 0x6 n m 0x3
       | (M_MOV_L, [A_R m; A_At_R n]) -> enc_int4 0x2 n m 0x2
       | (M_MOV_L, [A_At_R m; A_R n]) -> enc_int4 0x6 n m 0x2
+      | (M_LDS, [A_R m; A_PR]) -> enc_int3 0x4 m 0x2A
       | (M_STS, [A_PR; A_R n]) -> enc_int3 0x0 n 0x2A
       | (M_ADD, [A_R m; A_R n]) -> enc_int4 0x3 n m 0xC
       | (M_ADD, [A_Immd i; A_R n]) -> enc_int3 0x7 n (check_immd 8 true i)

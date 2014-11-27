@@ -118,6 +118,12 @@ void i_mov_l_ld(state_t *st, int m, int n) {
   inc_pc(st);
 }
 
+void i_lds_pr(state_t *st, int m) {
+  st->pr.i = st->gpr[m].i;
+  st->i_stat[I_LDS_PR]++;
+  inc_pc(st);
+}
+
 void i_sts_pr(state_t *st, int n) {
   st->gpr[n].i = st->pr.i;
   st->i_stat[I_STS_PR]++;
@@ -356,9 +362,9 @@ void i_rts(state_t *st) {
   st->i_stat[I_RTS]++;
 }
 
-void i_lds(state_t *st, int n) {
+void i_lds_fpul(state_t *st, int n) {
   st->fpul.i = st->gpr[n].i;
-  st->i_stat[I_LDS]++;
+  st->i_stat[I_LDS_FPUL]++;
   inc_pc(st);
 }
 
@@ -533,8 +539,11 @@ int exec_inst(state_t *st) {
       switch(param[2]) {
       case 0xA:
         switch(param[1]) {
+        case 0x2:               /* LDS */
+          i_lds_pr(st, param[0]);
+          break;
         case 0x5:               /* LDS */
-          i_lds(st, param[0]);
+          i_lds_fpul(st, param[0]);
           break;
         default:
           inst_error(inst);

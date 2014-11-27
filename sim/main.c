@@ -20,6 +20,7 @@ const char *inst_name[] = {
   "MOV Rm,Rn           ",
   "MOV.L Rm,@Rn        ",
   "MOV.L @Rm,Rn        ",
+  "LDS Rm,PR           ",
   "STS PR,Rn           ",
   "ADD Rm,Rn           ",
   "ADD #imm,Rn         ",
